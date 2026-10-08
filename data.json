@@ -1,7 +1,13 @@
 {
   "name": "Cutilisci",
-  "counts": [772, 597, 253, 129, 130],
+  "counts": [
+    772,
+    597,
+    253,
+    129,
+    130
+  ],
   "total": 1881,
-  "date": "iniziale",
-  "updatedAt": null
+  "date": "2026-10-08",
+  "updatedAt": "2026-10-08T07:47:21+02:00"
 }
