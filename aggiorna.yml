@@ -1,0 +1,42 @@
+name: Aggiorna recensioni
+
+on:
+  schedule:
+    # Orari in UTC. Due slot per coprire ora legale (7:00 italiane = 05:00 UTC) e ora solare (= 06:00 UTC).
+    # Ogni giorno alle 7:00. La prima chiamata la avvii tu a mano (Run workflow). Lo script chiama Tripadvisor al massimo UNA volta al giorno. Lo script chiama Tripadvisor al massimo UNA volta al giorno.
+    - cron: '0 5 * * *'
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Forza l aggiornamento anche se gia fatto oggi (usa 1 chiamata)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aggiorna-recensioni
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Leggi da Tripadvisor (max 1 volta al giorno)
+        env:
+          TRIPADVISOR_API_KEY: ${{ secrets.TRIPADVISOR_API_KEY }}
+          LOCATION_ID: ${{ vars.LOCATION_ID }}
+          EVENT: ${{ github.event_name }}
+          FORCE: ${{ inputs.force }}
+        run: python3 scripts/fetch.py
+
+      - name: Salva i dati nel sito
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add data.json
+          git diff --cached --quiet || (git commit -m "Aggiorna dati recensioni" && git push)

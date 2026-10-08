@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quante recensioni mancano ai Cutilisci?</title>
+<style>
+:root{--bg:#f3f6f4;--card:#fff;--ink:#12241f;--mute:#5c6f68;--line:#d6e0db;--g:#0c8f5e;--gsoft:#dff3ea;--warn:#b4531a;--r:14px;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1815;--card:#16241f;--ink:#e8f1ed;--mute:#9bb0a8;--line:#27392f;--g:#3fd596;--gsoft:#173a2c;--warn:#f0a06a}}
+:root[data-theme="dark"]{--bg:#0e1815;--card:#16241f;--ink:#e8f1ed;--mute:#9bb0a8;--line:#27392f;--g:#3fd596;--gsoft:#173a2c;--warn:#f0a06a}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.5}
+main{max-width:720px;margin:0 auto;padding:28px 18px calc(120px + env(safe-area-inset-bottom,0px))}
+h1{font-size:clamp(28px,6vw,40px);font-weight:800;line-height:1.1;margin:0 0 20px;letter-spacing:-.02em}
+.sub{color:var(--mute);margin:0 0 24px;max-width:56ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:16px}
+h2{font-size:16px;font-weight:600;margin:0 0 12px}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.grid{grid-template-columns:repeat(3,1fr)}.opts{grid-template-columns:1fr}}
+label{display:block;font-size:14px;color:var(--mute)}
+input,select{width:100%;margin-top:4px;padding:10px 12px;font:inherit;font-size:17px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--g);outline-offset:1px}
+.dots{display:inline-flex;gap:3px;vertical-align:middle;margin-left:4px}
+.dots i{width:11px;height:11px;border-radius:50%;border:2px solid var(--g);display:block}
+.dots i.on{background:var(--g)}
+.result{background:var(--gsoft);border-color:transparent;text-align:center;padding:26px 18px}
+.big{font-size:clamp(64px,18vw,104px);font-weight:800;line-height:1;letter-spacing:-.04em;color:var(--g)}
+.res-l{font-size:18px;margin-top:6px}
+.bub{display:flex;justify-content:center;gap:6px;margin:16px 0 4px}
+.bub span{width:22px;height:22px;border-radius:50%;border:3px solid var(--g);background:linear-gradient(90deg,var(--g) var(--f,0%),transparent var(--f,0%))}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px;text-align:center}
+.stats b{display:block;font-size:22px}.stats small{color:var(--mute)}
+table{width:100%;border-collapse:collapse;font-size:16px}
+th,td{padding:9px 6px;text-align:left;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--mute);font-size:14px}td:last-child,th:last-child{text-align:right}
+.msg{color:var(--warn);font-weight:600}
+.note{font-size:13px;color:var(--mute);margin:0}
+button{font:inherit;font-size:14px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;margin-top:12px}
+button.pri{background:var(--g);color:#fff;border-color:var(--g);font-weight:600}
+a.btn{display:inline-block;font-size:14px;padding:8px 14px;border-radius:10px;border:1px solid var(--g);color:var(--g);text-decoration:none;margin-top:12px;margin-right:8px;font-weight:600}
+textarea{width:100%;margin-top:8px;min-height:120px;padding:10px 12px;font:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px}
+.upd{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+.ok{color:var(--g);font-weight:600;font-size:14px;margin:8px 0 0}
+input[readonly]{background:var(--gsoft);border-color:transparent;font-weight:600;cursor:default;pointer-events:none}
+.upd{display:flex;align-items:center;gap:8px}
+.pulse{width:9px;height:9px;border-radius:50%;background:var(--mute);flex:none}
+.pulse.live{background:var(--g);animation:pl 1s infinite alternate}
+@keyframes pl{to{opacity:.25}}
+.pace{text-align:center}
+.pace .yl{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.pace .yl b{font-size:22px;color:var(--g)}
+input[type=range]{padding:0;border:0;background:transparent;height:34px;accent-color:var(--g);margin:0}
+.ticks{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);padding:0 4px}
+.pbig{font-size:clamp(44px,13vw,72px);font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--g);margin-top:14px}
+.pbig small{font-size:.35em;font-weight:600;letter-spacing:0;color:var(--ink)}
+#bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(0,0,0,.12);padding:10px 18px calc(10px + env(safe-area-inset-bottom,0px))}
+#bar .in{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:14px}
+#bn{font-size:44px;font-weight:800;line-height:1;letter-spacing:-.03em;color:var(--g);min-width:2ch;text-align:center}
+#bt{font-size:15px;line-height:1.3}#bt small{display:block;color:var(--mute);font-size:12px}
+#bar.flash #bn{animation:pop .7s}
+@keyframes pop{30%{transform:scale(1.35)}}
+#toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:30;background:var(--g);color:#fff;padding:14px 20px;border-radius:14px;font-weight:600;font-size:16px;text-align:center;max-width:calc(100% - 36px);box-shadow:0 10px 30px rgba(0,0,0,.25);transition:opacity .3s,transform .3s}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast b{font-size:28px;display:block;line-height:1.1}
+@media(prefers-reduced-motion:reduce){.pulse.live,#bar.flash #bn{animation:none}#toast{transition:none}}
+#ld{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(10,20,16,.55);padding:18px}
+#ld.show{display:flex}
+#ld .box{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:var(--r);padding:26px 28px;text-align:center;max-width:320px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+#ld .sp{width:38px;height:38px;border-radius:50%;border:4px solid var(--gsoft);border-top-color:var(--g);margin:0 auto 14px;animation:spin .9s linear infinite}
+#ld p{margin:0;font-weight:600;font-size:18px;line-height:1.3}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){#ld .sp{animation:none}}
+</style>
+</head>
+<body>
+<main>
+<h1>Quante recensioni mancano ai Cutilisci?</h1>
+
+<section class="card">
+<h2>Le tue recensioni oggi</h2>
+<div class="grid">
+<label>5 stelle<span class="dots"><i class="on"></i></span><input id="c5" type="text" value="772" readonly tabindex="-1" aria-readonly="true"></label>
+<label>4 stelle<input id="c4" type="text" value="597" readonly tabindex="-1" aria-readonly="true"></label>
+<label>3 stelle<input id="c3" type="text" value="253" readonly tabindex="-1" aria-readonly="true"></label>
+<label>2 stelle<input id="c2" type="text" value="129" readonly tabindex="-1" aria-readonly="true"></label>
+<label>1 stella<input id="c1" type="text" value="130" readonly tabindex="-1" aria-readonly="true"></label>
+</div>
+<div class="upd"><span class="pulse" id="pulse"></span><p class="note" id="upmsg" aria-live="polite" style="margin:0">Aggiornamento automatico da Tripadvisor…</p></div>
+<a class="btn" id="tl" href="https://www.tripadvisor.it/Restaurant_Review-g187888-d1739002-Reviews-Cutilisci-Catania_Province_of_Catania_Sicily.html" target="_blank" rel="noopener">Apri Tripadvisor</a>
+</section>
+
+<section class="card">
+<h2>Cosa vuoi ottenere?</h2>
+<div class="opts">
+<label>Punteggio da raggiungere<input id="target" type="number" min="1" max="5" step="0.1" inputmode="decimal" value="4.0"></label>
+<label>Voto medio delle nuove recensioni<input id="newavg" type="number" min="1" max="5" step="0.1" inputmode="decimal" value="5"></label>
+</div>
+</section>
+
+<section class="card result" aria-live="polite">
+<div id="out"></div>
+</section>
+
+<section class="card pace">
+<h2 style="text-align:left">Quante recensioni al giorno da 5 stelle sono necessarie?</h2>
+<div class="yl"><span style="color:var(--mute);font-size:14px">Tempo</span><b id="yv">2 anni</b></div>
+<input id="years" type="range" min="1" max="10" step="1" value="2" aria-label="Anni per raggiungere l'obiettivo">
+<div class="ticks" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span></div>
+<div id="pace" aria-live="polite"></div>
+</section>
+
+<section class="card">
+<h2>E se le nuove recensioni non sono tutte da 5 stelle?</h2>
+<table><thead><tr><th>Voto medio delle nuove</th><th>Recensioni mancanti</th></tr></thead><tbody id="tb"></tbody></table>
+</section>
+
+</main>
+<div id="bar" role="status" aria-live="polite"><div class="in"><div id="bn">–</div><div id="bt">recensioni mancanti<small id="bs"></small></div></div></div>
+<div id="toast" role="alert"></div>
+<div id="ld" role="alertdialog" aria-modal="true" aria-live="assertive"><div class="box"><div class="sp"></div><p>Sto caricando i dati nuovi…</p></div></div>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=(n,d)=>n.toLocaleString('it-IT',{minimumFractionDigits:d,maximumFractionDigits:d});
+function need(S,N,T,m){
+  if(N>0&&S/N>=T-1e-12)return 0;
+  if(m<=T+1e-12)return null;
+  let x=Math.max(1,Math.ceil((T*N-S)/(m-T)-1e-9));
+  while((S+m*x)/(N+x)<T-1e-12)x++;
+  while(x>1&&(S+m*(x-1))/(N+x-1)>=T-1e-12)x--;
+  return x;
+}
+function fp(v){return v>=10?fmt(v,0):v>=1?fmt(v,1):fmt(v,2)}
+function pace(x){
+  const y=+$('years').value||1,d=y*365,el=$('pace');
+  $('yv').textContent=y+(y===1?' anno':' anni');
+  if(x===null){el.innerHTML='<div class="msg res-l" style="margin-top:14px">Obiettivo non raggiungibile con questo voto medio.</div>';return}
+  if(x===0){el.innerHTML='<div class="res-l" style="margin-top:14px">Obiettivo già raggiunto: non serve nulla.</div>';return}
+  const pd=x/d;
+  el.innerHTML='<div class="pbig">'+fp(pd)+' <small>al giorno</small></div>'+
+  '<div class="stats"><div><b>'+fp(pd*7)+'</b><small>a settimana</small></div><div><b>'+fp(pd*365/12)+'</b><small>al mese</small></div><div><b>'+(pd<1?'1 ogni '+fmt(1/pd,1)+' gg':fmt(Math.ceil(pd),0)+' al giorno')+'</b><small>'+(pd<1?'ritmo':'arrotondato')+'</small></div></div>';
+}
+function calc(){
+  const c=[1,2,3,4,5].map(s=>Math.max(0,Math.floor(+$('c'+s).value||0)));
+  const N=c.reduce((a,b)=>a+b,0);
+  const S=c.reduce((a,v,i)=>a+v*(i+1),0);
+  const target=Math.min(5,Math.max(1,+$('target').value||4));
+  const m=Math.min(5,Math.max(1,+$('newavg').value||5));
+  const shown=true; // Tripadvisor mostra il punteggio arrotondato a 1 decimale
+  const T=shown?target-0.05:target;
+  const out=$('out'),tb=$('tb');window.__res=undefined;
+  if(N===0){showBar(null,'');pace(null);out.innerHTML='<div class="res-l">Inserisci almeno una recensione per iniziare.</div>';tb.innerHTML='';return}
+  const avg=S/N, disp=Math.round(avg*10+1e-9)/10;
+  const x=need(S,N,T,m);window.__res=x;pace(x);
+  showBar(x,x===null?'alza il voto delle nuove':'per '+(shown?'vedere ':'una media di ')+fmt(target,1)+' · ora '+fmt(disp,1));if(x===0||x===null)$('bn').textContent=x===0?'0':'–';
+  const fill=Math.max(0,Math.min(1,avg-0));
+  let bub='';for(let i=0;i<5;i++){bub+='<span style="--f:'+Math.round(Math.max(0,Math.min(1,avg-i))*100)+'%"></span>'}
+  let head;
+  if(x===0)head='<div class="big">0</div><div class="res-l">Hai già raggiunto '+fmt(target,1)+'.</div>';
+  else if(x===null)head='<div class="msg res-l">Con nuove recensioni da '+fmt(m,1)+' non si arriva a '+fmt(target,1)+'. Alza il voto medio delle nuove.</div>';
+  else{
+    const after=(S+m*x)/(N+x);
+    head='<div class="big">'+x.toLocaleString('it-IT')+'</div><div class="res-l">recensioni mancanti per '+(shown?'vedere ':'una media di ')+fmt(target,1)+'</div>';
+    head+='<div class="note" style="margin-top:6px">Con '+x.toLocaleString('it-IT')+' nuove recensioni da '+fmt(m,1)+' la media sale a '+fmt(after,4)+'.</div>';
+  }
+  out.innerHTML=head+'<div class="bub" aria-hidden="true">'+bub+'</div><div class="stats"><div><b>'+fmt(avg,4)+'</b><small>media esatta</small></div><div><b>'+fmt(disp,1)+'</b><small>punteggio mostrato</small></div><div><b>'+N.toLocaleString('it-IT')+'</b><small>recensioni</small></div></div>';
+  tb.innerHTML=[5,4.8,4.6,4.5,4.2].map(v=>{const r=need(S,N,T,v);return '<tr><td>'+fmt(v,1)+(v===5?' (tutte da 5 stelle)':'')+'</td><td>'+(r===null?'non basta':r.toLocaleString('it-IT'))+'</td></tr>'}).join('');
+}
+['c1','c2','c3','c4','c5','target','newavg','years'].forEach(id=>$(id).addEventListener('input',calc));
+const DEF=[772,597,253,129,130];
+let toastT=null,busy=false;
+function showBar(x,label){
+  const bar=$('bar');
+  $('bn').textContent=x===null?'–':x.toLocaleString('it-IT');
+  $('bs').textContent=label||'';
+  bar.classList.remove('flash');void bar.offsetWidth;bar.classList.add('flash');
+}
+function toast(html){
+  const t=$('toast');t.innerHTML=html;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),6000);
+}
+function setCounts(r){[5,4,3,2,1].forEach((st,i)=>$('c'+st).value=r[i])}
+function showLoad(on){$('ld').classList.toggle('show',on)}
+function resultToast(){
+  if(window.__res===undefined)return;
+  const x=window.__res;
+  toast('Dati aggiornati<b>'+(x===null?'obiettivo non raggiungibile':x===0?'Obiettivo già raggiunto':x.toLocaleString('it-IT')+' recensioni mancanti')+'</b>');
+}
+async function load(){
+  const msg=$('upmsg'),pl=$('pulse'),t0=Date.now();
+  pl.classList.add('live');
+  const finish=async()=>{
+    // il pop up resta visibile almeno un attimo, poi mostra il risultato
+    const wait=900-(Date.now()-t0);
+    if(wait>0)await new Promise(r=>setTimeout(r,wait));
+    pl.classList.remove('live');showLoad(false);resultToast();
+  };
+  if(location.protocol==='file:'){
+    setCounts(DEF);calc();
+    msg.style.color='var(--mute)';
+    msg.textContent='Anteprima sul tuo computer: mostro i dati iniziali. Online si aggiorna ogni giorno alle 7:00.';
+    return finish();
+  }
+  try{
+    const res=await fetch('data.json?'+Date.now(),{cache:'no-store'});
+    if(!res.ok)throw new Error('data.json non trovato ('+res.status+')');
+    const j=await res.json();
+    if(!Array.isArray(j.counts)||j.counts.length!==5)throw new Error('data.json non valido');
+    setCounts(j.counts);calc();
+    const dt=j.updatedAt?new Date(j.updatedAt):null;
+    msg.style.color='var(--g)';
+    msg.textContent='Dati di Tripadvisor, aggiornati ogni giorno alle 7:00 · ultimo aggiornamento: '+
+      (dt&&!isNaN(dt)?dt.toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short',timeZone:'Europe/Rome'}):'dati iniziali')+
+      ' ('+j.counts.reduce((a,b)=>a+b,0).toLocaleString('it-IT')+' recensioni).';
+  }catch(e){
+    msg.style.color='var(--warn)';
+    msg.textContent='Errore: '+e.message+' · Mostro gli ultimi dati noti.';
+    setCounts(DEF);calc();
+  }
+  return finish();
+}
+showLoad(true);
+load();
+calc();
+</script>
+</body>
+</html>
