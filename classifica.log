@@ -1,0 +1,13 @@
+Allowlist: risposta 429 {
+  "type" : "https://tripadvisor-content.readme.io/reference/errors#too-many-requests",
+  "title" : "Too Many Requests",
+  "status" : 429,
+  "detail" : "Rate Limit was exceeded for provided API Key",
+ERRORE: Ricerca dei ristoranti: Tripadvisor ha risposto 400: {
+  "type" : "https://tripadvisor-content.readme.io/reference/errors#bad-request",
+  "title" : "Bad Request",
+  "status" : 400,
+  "detail" : "Bounding box area must not exceed 50 square kilometers",
+  "instance" : "/catalog/locations/nearby",
+  "trace_id" : "6ae0cb0b3074a5c3fcdaa80d8b6db721"
+}
