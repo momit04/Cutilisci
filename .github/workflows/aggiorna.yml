@@ -46,12 +46,15 @@ jobs:
           LOCATION_ID: ${{ vars.LOCATION_ID }}
           EVENT: ${{ github.event_name }}
           FORCE_CLASSIFICA: ${{ inputs.classifica }}
-        run: python3 scripts/classifica.py
+        # Il risultato resta in classifica.log, leggibile anche senza aprire Actions
+        run: |
+          set -o pipefail
+          python3 scripts/classifica.py 2>&1 | tee classifica.log
 
       - name: Salva i dati nel sito
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git add data.json
-          for f in classifica.json storico.csv; do if [ -f "$f" ]; then git add "$f"; fi; done
+          for f in classifica.json storico.csv classifica.log; do if [ -f "$f" ]; then git add "$f"; fi; done
           git diff --cached --quiet || (git commit -m "Aggiorna dati recensioni" && git push)
