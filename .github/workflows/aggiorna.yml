@@ -12,6 +12,10 @@ on:
         description: 'Forza l aggiornamento anche se gia fatto oggi (usa 1 chiamata)'
         type: boolean
         default: false
+      classifica:
+        description: 'Rileggi subito la classifica dei concorrenti (di solito una volta a settimana)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -34,9 +38,20 @@ jobs:
           FORCE: ${{ inputs.force }}
         run: python3 scripts/fetch.py
 
+      - name: Classifica Tripadvisor (concorrenti una volta a settimana)
+        # Se la classifica non riesce, i dati di oggi vengono salvati lo stesso
+        continue-on-error: true
+        env:
+          TRIPADVISOR_API_KEY: ${{ secrets.TRIPADVISOR_API_KEY }}
+          LOCATION_ID: ${{ vars.LOCATION_ID }}
+          EVENT: ${{ github.event_name }}
+          FORCE_CLASSIFICA: ${{ inputs.classifica }}
+        run: python3 scripts/classifica.py
+
       - name: Salva i dati nel sito
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git add data.json
+          for f in classifica.json storico.csv; do if [ -f "$f" ]; then git add "$f"; fi; done
           git diff --cached --quiet || (git commit -m "Aggiorna dati recensioni" && git push)

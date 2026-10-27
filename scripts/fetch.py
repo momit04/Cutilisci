@@ -34,6 +34,20 @@ def show_limits(headers):
         print('Tripadvisor indica:', rl)
 
 
+def parse_rankings(d):
+    """Posizioni in classifica del locale (campo rankings di Location Details), in forma compatta."""
+    rk = d.get('rankings') or d.get('ranking') or []
+    if isinstance(rk, dict):
+        rk = [rk]
+    out = []
+    for r in rk:
+        if not isinstance(r, dict) or r.get('rank') is None:
+            continue
+        out.append({k: r.get(k) for k in ('rank', 'total', 'category', 'category_id', 'geo', 'geo_id', 'display_text')
+                    if r.get(k) is not None})
+    return out
+
+
 def fetch(key, loc):
     status, text, hdr = call('GET', f'/locations/{loc}', key)
     show_limits(hdr)
@@ -54,7 +68,7 @@ def fetch(key, loc):
     counts = [by.get(k, 0) for k in (5, 4, 3, 2, 1)]
     names = d.get('names') or []
     name = next((n['value'] for n in names if n.get('primary')), names[0]['value'] if names else None)
-    return {'name': name, 'counts': counts, 'total': sum(counts)}
+    return {'name': name, 'counts': counts, 'total': sum(counts), 'rankings': parse_rankings(d)}
 
 
 def main():
