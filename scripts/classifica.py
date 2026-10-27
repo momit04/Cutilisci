@@ -6,7 +6,7 @@ Una volta a settimana legge posizione e recensioni dei locali sopra (e poco sott
 li aggiunge allo storico e stima come Tripadvisor ordina la classifica: il risultato va in classifica.json,
 che la pagina usa per dire quante recensioni servono per arrivare a una certa posizione.
 Solo libreria standard di Python."""
-import csv, json, math, os, sys, time
+import csv, json, math, os, random, sys, time
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
@@ -20,7 +20,7 @@ HIST_COLS = ['date', 'id', 'name', 'rank', 'rank_total', 'pizza_rank', 'pizza_to
 
 GEO = int(os.environ.get('GEO_ID') or 187888)              # Catania
 EVERY_DAYS = int(os.environ.get('EVERY_DAYS') or 7)         # ogni quanti giorni rileggere i concorrenti
-MARGIN = int(os.environ.get('MARGIN') or 15)                # quante posizioni sotto ai Cutilisci seguire
+MARGIN = int(os.environ.get('MARGIN') or 5)                 # quante posizioni sotto ai Cutilisci seguire
 # Riquadro in cui cercare i ristoranti di Catania (sud-ovest, nord-est)
 BBOX = [float(v) for v in (os.environ.get('BBOX') or '37.42,14.98,37.57,15.16').split(',')]
 MIN_RATING = os.environ.get('DISCOVERY_MIN_RATING') or '4'
@@ -66,14 +66,15 @@ def total_pages(data):
 
 
 def discover(key):
-    """Tutti i ristoranti nel riquadro di Catania (catalogo, non limitato dalla allowlist)."""
+    """Ristoranti nel riquadro di Catania (catalogo, non limitato dalla allowlist), con il numero di recensioni.
+    Ordinati dal piu' recensito: chi sta in alto in classifica di solito ne ha tante."""
     global billed
     sw_lat, sw_lon, ne_lat, ne_lon = BBOX
     base = {'sw_lat': sw_lat, 'sw_lon': sw_lon, 'ne_lat': ne_lat, 'ne_lon': ne_lon, 'size': 20}
     if MIN_RATING:
         base['min_rating'] = MIN_RATING
-    ids, page, with_cat = [], 1, True
-    while len(ids) < MAX_DISCOVERY:
+    found, page, with_cat = {}, 1, True
+    while len(found) < MAX_DISCOVERY:
         q = dict(base, page=page)
         if with_cat:
             q['category'] = 'RESTAURANT'
@@ -83,15 +84,18 @@ def discover(key):
             continue
         if status != 200:
             raise RuntimeError(f'Ricerca dei ristoranti: Tripadvisor ha risposto {status}: {text[:300]}')
-        got = [int(x['id']) for x in items(data) if isinstance(x, dict) and x.get('id') is not None]
+        got = items(data)
         billed += len(got)
-        ids += [i for i in got if i not in ids]
+        for x in got:
+            loc = x.get('location') or x if isinstance(x, dict) else {}
+            if loc.get('id') is not None:
+                found[int(loc['id'])] = int((loc.get('overall_rating') or {}).get('count') or 0)
         tp = total_pages(data)
         if not got or (tp is not None and page >= tp):
             break
         page += 1
-    print(f'Trovati {len(ids)} ristoranti nel riquadro di Catania')
-    return ids
+    print(f'Trovati {len(found)} ristoranti nel riquadro di Catania')
+    return sorted(found, key=lambda i: -found[i])
 
 
 def allow(key, ids):
@@ -234,6 +238,8 @@ def fit(places):
     sd = [math.sqrt(sum((x[j] - mu[j]) ** 2 for x in X) / len(X)) or 1 for j in range(k)]
     Z = [[(x[j] - mu[j]) / sd[j] for j in range(k)] for x in X]
     pairs = [(Z[a], Z[b]) for a in range(len(pl)) for b in range(len(pl)) if pl[a]['rank'] < pl[b]['rank']]
+    if len(pairs) > 6000:  # basta un campione: tiene veloce il calcolo
+        pairs = random.Random(1).sample(pairs, 6000)
     diffs = [[a[j] - b[j] for j in range(k)] for a, b in pairs]
     w = [1.0] * k
     lam, lr = 0.01, 0.5
@@ -292,37 +298,49 @@ def main():
 
     tracked = old.get('tracked') or []
     disc_at = old.get('discoveredAt')
+    places = {}
+
+    def read(ids):
+        ids = [i for i in ids if i not in places]
+        allow(key, ids)
+        places.update({i: parse_place(x) for i, x in details(key, ids).items()})
+
+    def limit():
+        return ((places.get(me) or {}).get('rank') or 85) + MARGIN
+
+    def missing():
+        seen = {p['rank'] for p in places.values() if p['rank']}
+        return [r for r in range(1, limit() + 1) if r not in seen]
+
+    def search():
+        # Leggo i dettagli a gruppi, dal piu' recensito, e mi fermo appena ho tutte le posizioni che servono
+        # (alcune posizioni possono essere di locali fuori dalla ricerca, es. voto sotto 4: le lascio perdere)
+        cand = discover(key)
+        idle = 0
+        for i in range(0, len(cand), 40):
+            before = len(missing())
+            if before <= max(2, limit() // 20) or idle >= 2:
+                break
+            read(cand[i:i + 40])
+            idle = idle + 1 if len(missing()) >= before else 0
+        print(f'Letti i dettagli di {len(places)} locali; posizioni ancora mancanti: {len(missing())}')
+
     try:
+        read([me] + [i for i in tracked if i != me])
         if not tracked:
-            cand = discover(key)
+            search()
             disc_at = today.isoformat()
         else:
-            cand = list(tracked)
-        if me not in cand:
-            cand.append(me)
-        allow(key, cand)
-        places = {i: parse_place(x) for i, x in details(key, cand).items()}
-
-        def needed(ps):
-            mine = ps.get(me) or {}
-            lim = (mine.get('rank') or 85) + MARGIN
-            plim = (mine.get('pizza_rank') or 25) + MARGIN
-            return {i for i, p in ps.items() if i == me or (p['rank'] and p['rank'] <= lim)
-                    or (p['pizza_rank'] and p['pizza_rank'] <= plim)}
-
-        # Se nella fascia che seguo mancano posizioni (qualcuno nuovo e' salito), ricerco tutto (max 1 volta al mese)
-        keep = needed(places)
-        lim = ((places.get(me) or {}).get('rank') or 85) + MARGIN
-        seen = {places[i]['rank'] for i in keep if places[i]['rank']}
-        missing = [r for r in range(1, lim) if r not in seen]
-        stale = not disc_at or (today - datetime.fromisoformat(disc_at).date()).days >= REDISCOVER_DAYS
-        if tracked and len(missing) > max(2, lim // 10) and stale:
-            print(f'Mancano {len(missing)} posizioni nella fascia seguita: cerco di nuovo i ristoranti')
-            extra = [i for i in discover(key) if i not in places]
-            disc_at = today.isoformat()
-            allow(key, extra)
-            places.update({i: parse_place(x) for i, x in details(key, extra).items()})
-            keep = needed(places)
+            # Se nella fascia mancano posizioni (qualcuno nuovo e' salito), ricerco (max 1 volta al mese)
+            stale = not disc_at or (today - datetime.fromisoformat(disc_at).date()).days >= REDISCOVER_DAYS
+            if len(missing()) > 2 and stale:
+                print(f'Mancano {len(missing())} posizioni nella fascia seguita: cerco di nuovo i ristoranti')
+                search()
+                disc_at = today.isoformat()
+        lim = limit()
+        plim = ((places.get(me) or {}).get('pizza_rank') or 0) + MARGIN
+        keep = {i for i, p in places.items() if i == me or (p['rank'] and p['rank'] <= lim)
+                or (p['pizza_rank'] and p['pizza_rank'] <= plim)}
     except RuntimeError as e:
         print('ERRORE:', e)
         return 1
