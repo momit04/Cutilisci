@@ -73,8 +73,6 @@ input[type=range]{padding:0;border:0;background:transparent;height:34px;accent-c
 #ld p{margin:0;font-weight:600;font-size:18px;line-height:1.3}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){#ld .sp{animation:none}}
-.rres{background:var(--gsoft);border-radius:12px;padding:18px;margin:14px 0;text-align:center}
-.rres .big{font-size:clamp(48px,14vw,80px)}
 .rnow{display:flex;justify-content:center;gap:28px;margin-bottom:14px}
 .rnow b{display:block;font-size:26px;line-height:1.1}.rnow small{color:var(--mute);font-size:13px}
 td small{display:block;color:var(--mute);font-size:12px}
@@ -124,17 +122,6 @@ td small{display:block;color:var(--mute);font-size:12px}
 <table><thead><tr><th>Voto medio delle nuove</th><th>Recensioni mancanti</th></tr></thead><tbody id="tb"></tbody></table>
 </section>
 
-<section class="card" id="cls">
-<h2>Posizione in classifica su Tripadvisor</h2>
-<div class="opts">
-<label>Classifica<select id="rk"><option value="g">Ristoranti a Catania</option><option value="p">Pizzerie a Catania</option></select></label>
-<label>Posizione da raggiungere<input id="rpos" type="number" min="1" step="1" inputmode="numeric" value="1"></label>
-<label>In quanto tempo<select id="rh"><option value="3">3 mesi</option><option value="6" selected>6 mesi</option><option value="12">12 mesi</option></select></label>
-</div>
-<div id="rout" class="rres" aria-live="polite"><p class="note">Carico la classifica…</p></div>
-<table id="rtab" hidden><thead><tr><th>Posizione</th><th>Locale</th><th>Recensioni in più</th></tr></thead><tbody id="rtb"></tbody></table>
-<p class="note" id="rnote" style="margin-top:12px"></p>
-</section>
 
 </main>
 <div id="bar" role="status" aria-live="polite"><div class="in"><div id="bn">–</div><div id="bt">recensioni mancanti<small id="bs"></small></div></div></div>
@@ -217,7 +204,7 @@ async function load(){
     pl.classList.remove('live');showLoad(false);resultToast();
   };
   if(location.protocol==='file:'){
-    setCounts(DEF);calc();loadRank(null);
+    setCounts(DEF);calc();
     msg.style.color='var(--mute)';
     msg.textContent='Anteprima sul tuo computer: mostro i dati iniziali. Online si aggiorna ogni giorno alle 7:00.';
     return finish();
@@ -227,7 +214,7 @@ async function load(){
     if(!res.ok)throw new Error('data.json non trovato ('+res.status+')');
     const j=await res.json();
     if(!Array.isArray(j.counts)||j.counts.length!==5)throw new Error('data.json non valido');
-    setCounts(j.counts);calc();loadRank(j);
+    setCounts(j.counts);calc();
     const dt=j.updatedAt?new Date(j.updatedAt):null;
     msg.style.color='var(--g)';
     msg.textContent='Dati di Tripadvisor, aggiornati ogni giorno alle 7:00 · ultimo aggiornamento: '+
@@ -236,125 +223,11 @@ async function load(){
   }catch(e){
     msg.style.color='var(--warn)';
     msg.textContent='Errore: '+e.message+' · Mostro gli ultimi dati noti.';
-    setCounts(DEF);calc();loadRank(null);
+    setCounts(DEF);calc();
   }
   return finish();
 }
 
-// ---- Classifica Tripadvisor: quante recensioni servono per una posizione ----
-let CL=null,ME=null;
-const lp=Math.log1p;
-function feats(p,m){const f=[lp(p.reviews),p.avg];if(m.features[0]==='recenti')f.unshift(lp(p.per_year||0));return f}
-function score(p,m){return feats(p,m).reduce((a,v,j)=>a+m.w[j]*(v-m.mu[j])/m.sd[j],0)}
-function proj(p,h){return {reviews:p.reviews+(p.per_year||0)*h/12,avg:p.avg,per_year:p.per_year}}
-function meAfter(x,h){
-  const base=(ME.per_year||0)*h/12,n=ME.reviews+base+x;
-  // Recenti = ultimi 30 giorni (ritmo annuo): x recensioni in h mesi alzano il ritmo di 12x/h
-  const add=CL.model&&CL.model.recent_window?12*x/h:x;
-  return {reviews:n,avg:(ME.avg*(ME.reviews+base)+5*x)/n,per_year:(ME.per_year||0)+add};
-}
-function rkOf(p,t){return t==='p'?p.pizza_rank:p.rank}
-function needFor(target,h,t,off){
-  const m=CL.model;
-  // Con il punteggio vero di Tripadvisor (rawRanking) uso le distanze vere: il modello serve solo per i cambiamenti
-  const raw=m.kind==='raw'&&ME.raw!=null&&target.raw!=null;
-  const goal=raw?target.raw+score(proj(target,h),m)-score(target,m):score(proj(target,h),m);
-  const ok=raw?x=>ME.raw+score(meAfter(x,h),m)-score(ME,m)>goal:x=>score(meAfter(x,h),m)+off>goal;
-  if(ok(0))return 0;
-  let hi=1;while(!ok(hi)){hi*=2;if(hi>100000)return null}
-  let lo=hi/2;while(hi-lo>1){const mid=Math.floor((lo+hi)/2);ok(mid)?hi=mid:lo=mid}
-  return hi;
-}
-function offset(t){
-  // Allinea il punteggio stimato dei Cutilisci alla loro posizione vera (il modello non e' perfetto)
-  const m=CL.model,r=rkOf(ME,t),ps=CL.places.filter(p=>p.id!==ME.id&&rkOf(p,t));
-  const up=ps.filter(p=>rkOf(p,t)<r).sort((a,b)=>rkOf(b,t)-rkOf(a,t))[0];
-  const dn=ps.filter(p=>rkOf(p,t)>r).sort((a,b)=>rkOf(a,t)-rkOf(b,t))[0];
-  const s=score(ME,m);
-  if(up&&dn)return (score(up,m)+score(dn,m))/2-s;
-  if(up)return Math.min(0,score(up,m)-s-0.01);
-  if(dn)return Math.max(0,score(dn,m)-s+0.01);
-  return 0;
-}
-const nf=n=>Math.round(n).toLocaleString('it-IT');
-function rcalc(){
-  const out=$('rout'),tb=$('rtb'),tab=$('rtab');
-  if(!CL||!ME||!CL.model){tab.hidden=true;return}
-  const t=$('rk').value,h=+$('rh').value,m=CL.model,my=rkOf(ME,t);
-  const tot=t==='p'?CL.pizza_total:(CL.rank_total||ME.rank_total);
-  if(!my){out.innerHTML='<p class="msg">'+(t==='p'&&!CL.pizza_source?'Classifica delle pizzerie non disponibile.':'Tripadvisor non mostra i Cutilisci in questa classifica.')+'</p>';tab.hidden=true;return}
-  const ps=CL.places.filter(p=>p.id!==ME.id&&rkOf(p,t)&&rkOf(p,t)<my).sort((a,b)=>rkOf(a,t)-rkOf(b,t));
-  const off=offset(t);
-  const at=X=>ps.filter(p=>rkOf(p,t)>=X)[0]||ps.filter(p=>rkOf(p,t)<X).slice(-1)[0]||null;
-  let X=Math.max(1,Math.floor(+$('rpos').value||1));
-  // Per arrivare in posizione X bisogna superare tutti i locali tra X e la posizione attuale
-  // Stima per ogni locale sopra, poi la rendo crescente salendo in classifica con una media
-  // (regressione isotona): un locale stimato male non fa saltare tutti i numeri sopra di lui
-  const need={},raw=ps.map(p=>needFor(p,h,t,off));
-  const blocks=[];
-  for(let i=ps.length-1;i>=0;i--){
-    const v=raw[i]===null?1e6:raw[i];blocks.push({s:v,n:1,i:[i]});
-    while(blocks.length>1&&blocks[blocks.length-2].s/blocks[blocks.length-2].n>blocks[blocks.length-1].s/blocks[blocks.length-1].n){
-      const b=blocks.pop(),a=blocks.pop();blocks.push({s:a.s+b.s,n:a.n+b.n,i:a.i.concat(b.i)})}
-  }
-  blocks.forEach(b=>{const v=b.s/b.n;b.i.forEach(i=>need[ps[i].id]=v>=1e5?null:Math.round(v))});
-  const now='<div class="rnow"><div><b>n. '+my+'</b><small>oggi'+(tot?' su '+nf(tot):'')+'</small></div><div><b>'+(ME.per_year==null?'–':nf(ME.per_year/12))+'</b><small>recensioni al mese oggi</small></div></div>';
-  let head;
-  if(X>=my)head='<div class="res-l">Sei già in posizione '+my+': scegli una posizione più alta.</div>';
-  else{
-    const tg=at(X);
-    if(!tg)head='<div class="msg res-l">Non ho i dati del locale in posizione '+X+'.</div>';
-    else{
-      const x=need[tg.id],P=rkOf(tg,t);
-      head=x===null?'<div class="msg res-l">Con le sole recensioni da 5 stelle non si arriva, secondo il modello.</div>':
-        '<div class="big">'+nf(x)+'</div><div class="res-l">recensioni da 5 stelle in più in '+h+' mesi per arrivare in posizione '+P+'</div>'+
-        '<p class="note" style="margin-top:6px">Circa <b>'+nf(x/h)+' al mese</b>'+(ME.per_year==null?'':' oltre alle '+nf(ME.per_year/12)+' che ricevi già')+'. In posizione '+P+' oggi c’è <b>'+esc(tg.name)+'</b>: '+nf(tg.reviews)+' recensioni, voto '+fmt(tg.avg,2)+(tg.per_year==null?'':', circa '+nf(tg.per_year/12)+' nuove al mese')+'.'+
-        (P!==X?' Del locale in posizione '+X+' non ho i dati: mostro il più vicino.':'')+'</p>';
-    }
-  }
-  out.innerHTML=now+head;
-  const want=[...new Set([1,2,3,5,10,15,20,30,50,75,100,my-1,my-3,my-5,X].filter(v=>v>=1&&v<my))].sort((a,b)=>a-b);
-  tb.innerHTML=want.map(v=>{const p=at(v);if(!p||rkOf(p,t)!==v)return '';const x=need[p.id];
-    return '<tr><td>'+v+'</td><td>'+esc(p.name)+'<small>'+nf(p.reviews)+' recensioni · voto '+fmt(p.avg,1)+(p.per_year==null?'':' · '+nf(p.per_year/12)+'/mese')+'</small></td><td>'+(x===null?'non basta':nf(x))+'</td></tr>'}).join('');
-  tab.hidden=!tb.innerHTML;
-}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';')}
-function learnText(){
-  const L=CL.learning;if(!L)return '';
-  if(L.active)return '<b>Recensioni recenti incluse</b>: osservando la classifica ogni giorno per '+L.days+' giorni, il modello che le usa ha previsto l’ultima settimana meglio di quello senza ('+Math.round(L.test_recent*100)+'% contro '+Math.round(L.test_base*100)+'%).';
-  if(L.days<L.needed)return '<b>In osservazione</b>: il programma legge la classifica ogni giorno e misura come cambia con le recensioni recenti; giorno '+L.days+' di '+L.needed+'. Fino ad allora la stima non le considera ed è pessimista.';
-  return '<b>Recensioni recenti non ancora incluse</b>: dopo '+L.days+' giorni di osservazione non migliorano la previsione dell’ultima settimana ('+(L.test_recent==null?'dati insufficienti':Math.round(L.test_recent*100)+'% contro '+Math.round(L.test_base*100)+'%')+'). Riprovo ogni giorno.';
-}
-function rnote(){
-  if(!CL||!CL.model){$('rnote').textContent='';return}
-  const m=CL.model,tw=m.w.reduce((a,b)=>a+b,0)||1,lab={recenti:'recensioni dell’ultimo anno',totale:'numero totale di recensioni',voto:'voto medio'};
-  const dt=new Date(CL.updatedAt);
-  $('rnote').innerHTML='Stima. Tripadvisor non pubblica la formula: dice solo che contano qualità, quantità e soprattutto recensioni recenti. '+
-    'Il modello impara il peso di ogni fattore dalla classifica vera ('+m.features.map((f,j)=>lab[f]+' '+Math.round(m.w[j]/tw*100)+'%').join(', ')+
-    ')'+(m.kind==='raw'?' usando il punteggio interno di Tripadvisor (spiega il '+Math.round(m.r2*100)+'% delle differenze)':' e mette nell’ordine giusto il '+Math.round(m.accuracy*100)+'% delle coppie di locali')+'. Si aggiorna da solo ogni giorno. '+
-    'Gli altri locali sono proiettati al loro ritmo attuale di recensioni. '+learnText()+' '+
-    'Classifica letta il '+(isNaN(dt)?CL.date:dt.toLocaleDateString('it-IT',{timeZone:'Europe/Rome'}))+' ('+CL.places.length+' locali seguiti'+(CL.pizza_source==='stima'?'; posizione tra le pizzerie stimata dall’ordine generale':'')+').';
-}
-async function loadRank(d){
-  if(location.protocol==='file:'){$('rout').innerHTML='<p class="note">Anteprima sul tuo computer: la classifica compare online.</p>';return}
-  try{
-    const res=await fetch('classifica.json?'+Date.now(),{cache:'no-store'});
-    if(!res.ok)throw new Error(res.status===404?'la classifica sarà disponibile dopo il primo aggiornamento.':'classifica.json non trovato ('+res.status+')');
-    CL=await res.json();
-    if(CL.error)throw new Error(CL.error);
-    ME=Object.assign({},CL.places.find(p=>p.id===CL.me));
-    if(!ME.id)throw new Error('mancano i dati dei Cutilisci');
-    // Dati di oggi dei Cutilisci (data.json si aggiorna ogni giorno, la classifica ogni settimana)
-    if(d&&Array.isArray(d.counts)){const n=d.counts.reduce((a,b)=>a+b,0);if(n){ME.reviews=n;ME.avg=d.counts.reduce((a,v,i)=>a+v*(5-i),0)/n}}
-    (d&&d.rankings||[]).forEach(r=>{const pz=/pizz/i.test(JSON.stringify(r))||String(r.category_id)==='31';
-      if(r.geo_id===CL.geo_id){if(pz&&CL.pizza_source==='api')ME.pizza_rank=r.rank;else if(!pz)ME.rank=r.rank}});
-    if(!CL.model)throw new Error('pochi dati per stimare la classifica.');
-    $('rpos').value=Math.max(1,(ME.rank||1)-10);
-    rnote();rcalc();
-  }catch(e){$('rout').innerHTML='<p class="msg">Classifica: '+esc(e.message)+'</p>';$('rtab').hidden=true}
-}
-$('rk').addEventListener('change',()=>{const r=rkOf(ME||{},$('rk').value);if(r)$('rpos').value=Math.max(1,r-($('rk').value==='p'?3:10));rcalc()});
-['rpos','rh'].forEach(id=>$(id).addEventListener('input',rcalc));
 showLoad(true);
 load();
 calc();
