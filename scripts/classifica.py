@@ -8,7 +8,7 @@ che la pagina usa per dire quante recensioni servono per arrivare a una certa po
 Solo libreria standard di Python."""
 import csv, json, math, os, random, sys, time
 import urllib.request, urllib.error
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fetch import now_rome
 
@@ -24,7 +24,10 @@ LISTS = {
 }
 # Tripadvisor mostra prima i locali 'in evidenza': per coprire le prime 60 posizioni ne leggo di piu'
 TOP = {'g': int(os.environ.get('POSIZIONI') or 150), 'p': int(os.environ.get('POSIZIONI_PIZZERIE') or 60)}
-EVERY_DAYS = int(os.environ.get('EVERY_DAYS') or 7)   # una volta a settimana
+EVERY_DAYS = int(os.environ.get('EVERY_DAYS') or 1)   # classifica generale: ogni giorno
+PIZZA_EVERY_DAYS = int(os.environ.get('PIZZA_EVERY_DAYS') or 7)  # lista pizzerie: una volta a settimana
+OBS_DAYS = 28      # giorni di osservazione prima di usare le recensioni recenti nelle stime
+WINDOW = 30        # le recensioni 'recenti' sono quelle degli ultimi 30 giorni
 ACTOR = os.environ.get('APIFY_ACTOR') or 'maxcopell~tripadvisor'
 APIFY = os.environ.get('APIFY_API_BASE') or 'https://api.apify.com/v2'
 
@@ -113,22 +116,134 @@ def append_hist(rows):
             w.writerow({k: ('' if r.get(k) is None else r.get(k)) for k in HIST_COLS})
 
 
-def per_year_from_hist(hist, loc, reviews, today):
-    """Ritmo di nuove recensioni dallo storico, se copre almeno 4 settimane (fino a un anno)."""
-    rows = [r for r in hist if r['id'] == str(loc) and r['reviews']]
-    old = [r for r in rows if 28 <= (today - datetime.fromisoformat(r['date']).date()).days <= 400]
-    if not old:
-        return None
-    first = min(old, key=lambda r: r['date'])
-    days = (today - datetime.fromisoformat(first['date']).date()).days
-    return round(max(0, reviews - int(first['reviews'])) / days * 365, 1)
-
-
 def features(p, use_recent):
     f = [math.log1p(p['reviews']), p['avg'] or 0]
     if use_recent:
         f.insert(0, math.log1p(p['per_year']))
     return f
+
+
+LEARN_DAYS = 120   # l'apprendimento usa gli ultimi 120 giorni (la classifica cambia nel tempo)
+
+
+def snapshots(hist, today=None):
+    """Storico per giorno: {data: {id: riga}} solo per le righe con posizione (lette dalla classifica)."""
+    days = {}
+    for r in hist:
+        if r.get('rank') and r.get('reviews'):
+            days.setdefault(r['date'], {})[r['id']] = r
+    if today:
+        keep = (today - timedelta(days=LEARN_DAYS + WINDOW + 15)).isoformat()
+        days = {d: v for d, v in days.items() if d >= keep}
+    return dict(sorted(days.items()))
+
+
+def recent_rate(days, loc, day):
+    """Recensioni nuove all'anno, misurate sugli ultimi ~30 giorni (almeno 7) prima di 'day'."""
+    now = days.get(day, {}).get(loc)
+    if not now:
+        return None
+    d0 = datetime.fromisoformat(day).date()
+    best = None
+    for gap in sorted(range(7, WINDOW + 16), key=lambda g: abs(g - WINDOW)):  # dal giorno piu' vicino a 30
+        then = days.get((d0 - timedelta(days=gap)).isoformat(), {}).get(loc)
+        if then:
+            best = (gap, then)
+            break
+    if not best:
+        return None
+    return max(0, int(now['reviews']) - int(best[1]['reviews'])) / best[0] * 365
+
+
+def day_rows(days, day, use_recent):
+    out = []
+    for loc, r in days[day].items():
+        p = {'reviews': int(r['reviews']), 'avg': float(r['avg'] or 0)}
+        if use_recent:
+            p['per_year'] = recent_rate(days, loc, day)
+            if p['per_year'] is None:
+                continue
+        out.append((features(p, use_recent), int(r['rank'])))
+    return out
+
+
+def fit_days(sets, names):
+    """Regressione logistica sulle coppie di ogni giorno osservato (chi sta sopra deve avere
+    punteggio piu' alto); pesi >= 0. 'sets' e' una lista di giorni, ognuno [(feature, posizione)]."""
+    X = [f for day in sets for f, _ in day]
+    if len(X) < 3:
+        return None
+    k = len(names)
+    mu = [sum(x[j] for x in X) / len(X) for j in range(k)]
+    sd = [math.sqrt(sum((x[j] - mu[j]) ** 2 for x in X) / len(X)) or 1 for j in range(k)]
+    diffs = []
+    for day in sets:
+        Z = [([(f[j] - mu[j]) / sd[j] for j in range(k)], r) for f, r in day]
+        diffs += [[a[j] - b[j] for j in range(k)] for a, ra in Z for b, rb in Z if ra < rb]
+    if len(diffs) > 6000:  # basta un campione: tiene veloce il calcolo
+        diffs = random.Random(1).sample(diffs, 6000)
+    if not diffs:
+        return None
+    w = [1.0] * k
+    lam, lr = 0.01, 0.5
+    for _ in range(1500):
+        g = [lam * wj for wj in w]
+        for d in diffs:
+            m = sum(w[j] * d[j] for j in range(k))
+            s = -1 / (1 + math.exp(min(m, 50)))
+            for j in range(k):
+                g[j] += s * d[j] / len(diffs)
+        w = [max(0.0, w[j] - lr * g[j]) for j in range(k)]
+    model = {'kind': 'order', 'features': names, 'mu': mu, 'sd': sd, 'w': [round(x, 5) for x in w], 'n': len(X)}
+    model['accuracy'] = accuracy(model, sets)
+    return model
+
+
+def accuracy(model, sets):
+    """Quota di coppie di locali che il modello mette nell'ordine giusto."""
+    k = len(model['w'])
+    ok = tot = 0
+    for day in sets:
+        sc = [(sum(model['w'][j] * (f[j] - model['mu'][j]) / model['sd'][j] for j in range(k)), r) for f, r in day]
+        for a, ra in sc:
+            for b, rb in sc:
+                if ra < rb:
+                    tot += 1
+                    ok += a > b
+    return round(ok / tot, 4) if tot else None
+
+
+def learn(hist, today):
+    """L'osservatore: confronta ogni giorno la classifica con le recensioni recenti di ogni locale.
+    Usa le recensioni recenti nelle stime solo dopo OBS_DAYS giorni e solo se, sull'ultima settimana
+    (non usata per imparare), prevede la classifica meglio del modello senza."""
+    all_days = snapshots(hist)
+    if not all_days:
+        return None, {'days': 0}
+    first = datetime.fromisoformat(next(iter(all_days))).date()
+    observed = (today - first).days + 1
+    days = snapshots(hist, today)
+    since = (today - timedelta(days=LEARN_DAYS)).isoformat()
+    rec_days = [d for d in days if d >= since and len(day_rows(days, d, True)) >= 10]
+    info = {'days': observed, 'needed': OBS_DAYS, 'snapshots': len(days), 'recent_days': len(rec_days), 'active': False}
+    if observed < OBS_DAYS or len(rec_days) < 10:
+        return None, info
+    test, train = rec_days[-7:], rec_days[:-7]
+    names_r, names_b = ['recenti', 'totale', 'voto'], ['totale', 'voto']
+    m_r = fit_days([day_rows(days, d, True) for d in train], names_r)
+    m_b = fit_days([day_rows(days, d, False) for d in train], names_b)
+    if not m_r or not m_b:
+        return None, info
+    test_rows = [day_rows(days, d, True) for d in test]
+    acc_r = accuracy(m_r, test_rows)
+    acc_b = accuracy(m_b, [[(f[1:], r) for f, r in day] for day in test_rows])  # stessi locali, senza recenti
+    info.update({'test_recent': acc_r, 'test_base': acc_b})
+    if acc_r is None or acc_b is None or acc_r < acc_b + 0.01:
+        return None, info
+    info['active'] = True
+    model = fit_days([day_rows(days, d, True) for d in rec_days], names_r)
+    model['recent_window'] = WINDOW
+    return model, info
 
 
 def fit_raw(places):
@@ -174,38 +289,6 @@ def fit_raw(places):
             'b': ym, 'r2': round(1 - ss / st, 4), 'n': len(pl)}
 
 
-def fit(places):
-    """Impara dai dati quanto pesano recensioni recenti, numero totale e voto medio.
-    Regressione logistica sulle coppie (chi sta sopra deve avere punteggio piu' alto); pesi >= 0."""
-    pl = [p for p in places if p.get('rank') and p.get('reviews')]
-    if len(pl) < 3:
-        return None
-    use_recent = all(p.get('per_year') is not None for p in pl)
-    names = (['recenti'] if use_recent else []) + ['totale', 'voto']
-    X = [features(p, use_recent) for p in pl]
-    k = len(names)
-    mu = [sum(x[j] for x in X) / len(X) for j in range(k)]
-    sd = [math.sqrt(sum((x[j] - mu[j]) ** 2 for x in X) / len(X)) or 1 for j in range(k)]
-    Z = [[(x[j] - mu[j]) / sd[j] for j in range(k)] for x in X]
-    pairs = [(Z[a], Z[b]) for a in range(len(pl)) for b in range(len(pl)) if pl[a]['rank'] < pl[b]['rank']]
-    if len(pairs) > 6000:  # basta un campione: tiene veloce il calcolo
-        pairs = random.Random(1).sample(pairs, 6000)
-    diffs = [[a[j] - b[j] for j in range(k)] for a, b in pairs]
-    w = [1.0] * k
-    lam, lr = 0.01, 0.5
-    for _ in range(1500):
-        g = [lam * wj for wj in w]
-        for d in diffs:
-            m = sum(w[j] * d[j] for j in range(k))
-            s = -1 / (1 + math.exp(min(m, 50)))
-            for j in range(k):
-                g[j] += s * d[j] / len(diffs)
-        w = [max(0.0, w[j] - lr * g[j]) for j in range(k)]
-    ok = sum(1 for d in diffs if sum(w[j] * d[j] for j in range(k)) > 0)
-    return {'kind': 'order', 'features': names, 'mu': mu, 'sd': sd, 'w': [round(x, 5) for x in w],
-            'accuracy': round(ok / len(diffs), 4) if diffs else None, 'pairs': len(diffs), 'n': len(pl)}
-
-
 def load_json(path):
     try:
         return json.load(open(path, encoding='utf-8'))
@@ -232,21 +315,31 @@ def main():
         hist.append({k: '' if row.get(k) is None else str(row[k]) for k in HIST_COLS})
         print('Storico: aggiunta la riga di oggi dei Cutilisci')
 
-    # 2) Una volta a settimana: le classifiche
+    # 2) Ogni giorno la classifica generale, una volta a settimana la lista delle pizzerie
     old = load_json(OUT)
     last = None if old.get('error') else old.get('date')
     if not force and last and (today - datetime.fromisoformat(last).date()).days < EVERY_DAYS:
-        print(f'Classifica letta il {last}: la rileggo tra {EVERY_DAYS} giorni. Nessuna chiamata.')
+        print(f'Classifica gia\' letta oggi ({last}). Nessuna chiamata.')
         return 0
     if not token:
         print('Classifica: manca il segreto APIFY_TOKEN. Nessuna chiamata.')
         return 0
+    pdate = old.get('pizza_date')
+    read_pizza = force or not old.get('pizzerie') or not pdate or \
+        (today - datetime.fromisoformat(pdate).date()).days >= PIZZA_EVERY_DAYS
     try:
         gen = [parse_item(x) for x in scrape(token, LISTS['g'], TOP['g'])]
-        piz = [parse_item(x) for x in scrape(token, LISTS['p'], TOP['p'])]
+        piz = [parse_item(x) for x in scrape(token, LISTS['p'], TOP['p'])] if read_pizza else []
     except Exception as e:
         print('ERRORE:', e)
         return 1
+    if not read_pizza:
+        # Pizzerie gia' note: la loro posizione la ricavo dalla classifica generale di oggi
+        ids = set(old.get('pizzerie') or [])
+        piz = [p for p in gen if p['id'] in ids]
+        pdate = old.get('pizza_date')
+    else:
+        pdate = today.isoformat()
     mine = next((p for p in gen + piz if p['id'] == me), None)
     if not mine:
         print(f"ERRORE: i Cutilisci non sono tra i locali letti: aumenta POSIZIONI")
@@ -269,21 +362,34 @@ def main():
     if gaps:
         print(f'Posizioni sopra ai Cutilisci non lette: {gaps}')
 
-    # 3) Ritmo di nuove recensioni: dallo storico (servono almeno 4 settimane)
+    # 3) Storico di oggi, poi ritmo di nuove recensioni (ultimi 30 giorni) e apprendimento
     sel = sorted(places.values(), key=lambda p: p['rank'])
-    for p in sel:
-        p['per_year'] = per_year_from_hist(hist, p['id'], p['reviews'], today)
-        p['per_year_src'] = 'storico' if p['per_year'] is not None else None
     done = {r['id'] for r in hist if r['date'] == today.isoformat() and r.get('rank')}
-    append_hist([dict(p, date=today.isoformat(), pizza_total=None) for p in sel if str(p['id']) not in done])
+    rows = [dict(p, date=today.isoformat(), pizza_total=None) for p in sel if str(p['id']) not in done]
+    append_hist(rows)
+    hist += [{k: '' if r.get(k) is None else str(r[k]) for k in HIST_COLS} for r in rows]
+    days = snapshots(hist, today)
+    for p in sel:
+        r = recent_rate(days, str(p['id']), today.isoformat())
+        p['per_year'] = round(r, 1) if r is not None else None
+        p['per_year_src'] = 'storico' if r is not None else None
 
-    model = fit_raw(sel) or fit(sel)
+    model, info = learn(hist, today)
+    if model:
+        # Locali senza storico sufficiente: uso il ritmo mediano, per non escluderli
+        known = sorted(p['per_year'] for p in sel if p['per_year'] is not None)
+        for p in sel:
+            if p['per_year'] is None and known:
+                p['per_year'], p['per_year_src'] = known[len(known) // 2], 'mediana'
+    else:
+        model = fit_raw(sel) or fit_days([[(features(p, False), p['rank']) for p in sel]], ['totale', 'voto'])
     mine = places[me]
     out = {
         'date': today.isoformat(), 'updatedAt': now.isoformat(timespec='seconds'), 'source': 'apify',
         'me': me, 'pizza_source': 'api' if pz else None,
         'rank_total': mine['rank_total'], 'pizza_total': None,
-        'model': model, 'places': sel,
+        'model': model, 'learning': info, 'places': sel,
+        'pizzerie': sorted(p['id'] for p in pz), 'pizza_date': pdate,
     }
     with open(OUT, 'w', encoding='utf-8') as f:
         json.dump(out, f, ensure_ascii=False, indent=1)
@@ -291,6 +397,9 @@ def main():
     q = (model or {}).get('r2', (model or {}).get('accuracy'))
     print(f"OK: Cutilisci n. {mine['rank']} (pizzerie: {mine['pizza_rank']}), {len(sel)} locali letti, "
           f"modello {(model or {}).get('kind')} qualita' {q}, punteggio Tripadvisor: {'si' if mine['raw'] is not None else 'no'}")
+    print(f"Osservazione: {info.get('days')} giorni su {OBS_DAYS}, recensioni recenti nelle stime: "
+          f"{'si' if info.get('active') else 'non ancora'} (prova sull'ultima settimana: con {info.get('test_recent')}, "
+          f"senza {info.get('test_base')})")
     return 0
 
 

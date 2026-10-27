@@ -249,7 +249,9 @@ function score(p,m){return feats(p,m).reduce((a,v,j)=>a+m.w[j]*(v-m.mu[j])/m.sd[
 function proj(p,h){return {reviews:p.reviews+(p.per_year||0)*h/12,avg:p.avg,per_year:p.per_year}}
 function meAfter(x,h){
   const base=(ME.per_year||0)*h/12,n=ME.reviews+base+x;
-  return {reviews:n,avg:(ME.avg*(ME.reviews+base)+5*x)/n,per_year:(ME.per_year||0)+x};
+  // Recenti = ultimi 30 giorni (ritmo annuo): x recensioni in h mesi alzano il ritmo di 12x/h
+  const add=CL.model&&CL.model.recent_window?12*x/h:x;
+  return {reviews:n,avg:(ME.avg*(ME.reviews+base)+5*x)/n,per_year:(ME.per_year||0)+add};
 }
 function rkOf(p,t){return t==='p'?p.pizza_rank:p.rank}
 function needFor(target,h,t,off){
@@ -317,14 +319,20 @@ function rcalc(){
   tab.hidden=!tb.innerHTML;
 }
 function esc(s){return String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';')}
+function learnText(){
+  const L=CL.learning;if(!L)return '';
+  if(L.active)return '<b>Recensioni recenti incluse</b>: osservando la classifica ogni giorno per '+L.days+' giorni, il modello che le usa ha previsto l’ultima settimana meglio di quello senza ('+Math.round(L.test_recent*100)+'% contro '+Math.round(L.test_base*100)+'%).';
+  if(L.days<L.needed)return '<b>In osservazione</b>: il programma legge la classifica ogni giorno e misura come cambia con le recensioni recenti; giorno '+L.days+' di '+L.needed+'. Fino ad allora la stima non le considera ed è pessimista.';
+  return '<b>Recensioni recenti non ancora incluse</b>: dopo '+L.days+' giorni di osservazione non migliorano la previsione dell’ultima settimana ('+(L.test_recent==null?'dati insufficienti':Math.round(L.test_recent*100)+'% contro '+Math.round(L.test_base*100)+'%')+'). Riprovo ogni giorno.';
+}
 function rnote(){
   if(!CL||!CL.model){$('rnote').textContent='';return}
   const m=CL.model,tw=m.w.reduce((a,b)=>a+b,0)||1,lab={recenti:'recensioni dell’ultimo anno',totale:'numero totale di recensioni',voto:'voto medio'};
   const dt=new Date(CL.updatedAt);
   $('rnote').innerHTML='Stima. Tripadvisor non pubblica la formula: dice solo che contano qualità, quantità e soprattutto recensioni recenti. '+
     'Il modello impara il peso di ogni fattore dalla classifica vera ('+m.features.map((f,j)=>lab[f]+' '+Math.round(m.w[j]/tw*100)+'%').join(', ')+
-    ')'+(m.kind==='raw'?' usando il punteggio interno di Tripadvisor (spiega il '+Math.round(m.r2*100)+'% delle differenze)':' e mette nell’ordine giusto il '+Math.round(m.accuracy*100)+'% delle coppie di locali')+'. Si aggiorna da solo ogni settimana e migliora man mano che lo storico cresce. '+
-    'Gli altri locali sono proiettati al loro ritmo attuale di recensioni (noto dopo 4 settimane di storico). '+
+    ')'+(m.kind==='raw'?' usando il punteggio interno di Tripadvisor (spiega il '+Math.round(m.r2*100)+'% delle differenze)':' e mette nell’ordine giusto il '+Math.round(m.accuracy*100)+'% delle coppie di locali')+'. Si aggiorna da solo ogni giorno. '+
+    'Gli altri locali sono proiettati al loro ritmo attuale di recensioni. '+learnText()+' '+
     'Classifica letta il '+(isNaN(dt)?CL.date:dt.toLocaleDateString('it-IT',{timeZone:'Europe/Rome'}))+' ('+CL.places.length+' locali seguiti'+(CL.pizza_source==='stima'?'; posizione tra le pizzerie stimata dall’ordine generale':'')+').';
 }
 async function loadRank(d){
