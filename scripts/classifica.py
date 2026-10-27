@@ -329,6 +329,9 @@ def main():
 
     # 2) Una volta a settimana: i concorrenti
     old = load_json(OUT)
+    if old.get('error') and not force:
+        print('Classifica sospesa:', old['error'], 'Nessuna chiamata.')
+        return 0
     last = old.get('date')
     if not force and last and (today - datetime.fromisoformat(last).date()).days < EVERY_DAYS:
         print(f'Classifica letta il {last}: la rileggo tra {EVERY_DAYS} giorni. Nessuna chiamata.')
