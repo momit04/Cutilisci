@@ -283,11 +283,19 @@ function rcalc(){
   if(!my){out.innerHTML='<p class="msg">'+(t==='p'&&!CL.pizza_source?'Classifica delle pizzerie non disponibile.':'Tripadvisor non mostra i Cutilisci in questa classifica.')+'</p>';tab.hidden=true;return}
   const ps=CL.places.filter(p=>p.id!==ME.id&&rkOf(p,t)&&rkOf(p,t)<my).sort((a,b)=>rkOf(a,t)-rkOf(b,t));
   const off=offset(t);
-  const at=X=>ps.filter(p=>rkOf(p,t)>=X)[0]||null;
+  const at=X=>ps.filter(p=>rkOf(p,t)>=X)[0]||ps.filter(p=>rkOf(p,t)<X).slice(-1)[0]||null;
   let X=Math.max(1,Math.floor(+$('rpos').value||1));
   // Per arrivare in posizione X bisogna superare tutti i locali tra X e la posizione attuale
-  const need={};let run=0;
-  for(let i=ps.length-1;i>=0;i--){const x=needFor(ps[i],h,t,off);run=(run===null||x===null)?null:Math.max(run,x);need[ps[i].id]=run}
+  // Stima per ogni locale sopra, poi la rendo crescente salendo in classifica con una media
+  // (regressione isotona): un locale stimato male non fa saltare tutti i numeri sopra di lui
+  const need={},raw=ps.map(p=>needFor(p,h,t,off));
+  const blocks=[];
+  for(let i=ps.length-1;i>=0;i--){
+    const v=raw[i]===null?1e6:raw[i];blocks.push({s:v,n:1,i:[i]});
+    while(blocks.length>1&&blocks[blocks.length-2].s/blocks[blocks.length-2].n>blocks[blocks.length-1].s/blocks[blocks.length-1].n){
+      const b=blocks.pop(),a=blocks.pop();blocks.push({s:a.s+b.s,n:a.n+b.n,i:a.i.concat(b.i)})}
+  }
+  blocks.forEach(b=>{const v=b.s/b.n;b.i.forEach(i=>need[ps[i].id]=v>=1e5?null:Math.round(v))});
   const now='<div class="rnow"><div><b>n. '+my+'</b><small>oggi'+(tot?' su '+nf(tot):'')+'</small></div><div><b>'+(ME.per_year==null?'–':nf(ME.per_year/12))+'</b><small>recensioni al mese oggi</small></div></div>';
   let head;
   if(X>=my)head='<div class="res-l">Sei già in posizione '+my+': scegli una posizione più alta.</div>';
@@ -299,7 +307,7 @@ function rcalc(){
       head=x===null?'<div class="msg res-l">Con le sole recensioni da 5 stelle non si arriva, secondo il modello.</div>':
         '<div class="big">'+nf(x)+'</div><div class="res-l">recensioni da 5 stelle in più in '+h+' mesi per arrivare in posizione '+P+'</div>'+
         '<p class="note" style="margin-top:6px">Circa <b>'+nf(x/h)+' al mese</b>'+(ME.per_year==null?'':' oltre alle '+nf(ME.per_year/12)+' che ricevi già')+'. In posizione '+P+' oggi c’è <b>'+esc(tg.name)+'</b>: '+nf(tg.reviews)+' recensioni, voto '+fmt(tg.avg,2)+(tg.per_year==null?'':', circa '+nf(tg.per_year/12)+' nuove al mese')+'.'+
-        (P!==X?' Del locale in posizione '+X+' non ho i dati: mostro quello subito dopo.':'')+'</p>';
+        (P!==X?' Del locale in posizione '+X+' non ho i dati: mostro il più vicino.':'')+'</p>';
     }
   }
   out.innerHTML=now+head;

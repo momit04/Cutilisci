@@ -22,7 +22,8 @@ LISTS = {
     'g': os.environ.get('URL_RISTORANTI') or 'https://www.tripadvisor.it/Restaurants-g187888-Catania_Province_of_Catania_Sicily.html',
     'p': os.environ.get('URL_PIZZERIE') or 'https://www.tripadvisor.it/Restaurants-g187888-c31-Catania_Province_of_Catania_Sicily.html',
 }
-TOP = int(os.environ.get('POSIZIONI') or 60)          # quante posizioni leggere per classifica
+# Tripadvisor mostra prima i locali 'in evidenza': per coprire le prime 60 posizioni ne leggo di piu'
+TOP = {'g': int(os.environ.get('POSIZIONI') or 150), 'p': int(os.environ.get('POSIZIONI_PIZZERIE') or 60)}
 EVERY_DAYS = int(os.environ.get('EVERY_DAYS') or 7)   # una volta a settimana
 ACTOR = os.environ.get('APIFY_ACTOR') or 'maxcopell~tripadvisor'
 APIFY = os.environ.get('APIFY_API_BASE') or 'https://api.apify.com/v2'
@@ -39,10 +40,10 @@ def apify(method, path, token, body=None, timeout=60):
         return e.code, e.read().decode('utf-8', 'ignore')[:300]
 
 
-def scrape(token, url):
+def scrape(token, url, top):
     """Avvia lo scraper su una pagina di classifica, aspetta la fine e restituisce i locali."""
     s, run = apify('POST', f'/acts/{ACTOR}/runs', token, {
-        'startUrls': [{'url': url}], 'maxItemsPerQuery': TOP, 'includeRestaurants': True,
+        'startUrls': [{'url': url}], 'maxItemsPerQuery': top, 'includeRestaurants': True,
         'includeHotels': False, 'includeAttractions': False, 'includeVacationRentals': False,
         'includeTags': False, 'includeNearbyResults': False, 'language': 'it', 'currency': 'EUR'})
     if s >= 300:
@@ -241,23 +242,32 @@ def main():
         print('Classifica: manca il segreto APIFY_TOKEN. Nessuna chiamata.')
         return 0
     try:
-        gen = [parse_item(x) for x in scrape(token, LISTS['g'])]
-        piz = [parse_item(x) for x in scrape(token, LISTS['p'])]
+        gen = [parse_item(x) for x in scrape(token, LISTS['g'], TOP['g'])]
+        piz = [parse_item(x) for x in scrape(token, LISTS['p'], TOP['p'])]
     except Exception as e:
         print('ERRORE:', e)
         return 1
-    places = {p['id']: p for p in gen if p['id'] and p['rank']}
+    mine = next((p for p in gen + piz if p['id'] == me), None)
+    if not mine:
+        print(f"ERRORE: i Cutilisci non sono tra i locali letti: aumenta POSIZIONI")
+        return 1
+    # Solo i locali della stessa classifica dei Cutilisci (fuori Catania la classifica e' un'altra)
+    tot = mine['rank_total']
+    same = lambda p: p['id'] and p['rank'] and (not tot or p['rank_total'] == tot)
+    gen, piz = [p for p in gen if same(p)], [p for p in piz if same(p)]
+    places = {p['id']: p for p in gen}
     # Posizione tra le pizzerie: ordine della classifica generale tra i locali della lista pizzerie
-    pz = sorted((p for p in piz if p['id'] and p['rank']), key=lambda p: p['rank'])
+    pz = sorted(piz, key=lambda p: p['rank'])
     for i, p in enumerate(pz, 1):
         q = places.setdefault(p['id'], p)
         q['pizza_rank'] = i
     for p in places.values():
         p.setdefault('pizza_rank', None)
         p['pizza'] = p['pizza_rank'] is not None
-    if me not in places:
-        print(f'ERRORE: i Cutilisci non sono tra le prime {TOP} posizioni lette: aumenta POSIZIONI')
-        return 1
+    places.setdefault(me, mine)
+    gaps = [r for r in range(1, mine['rank']) if r not in {p['rank'] for p in places.values()}]
+    if gaps:
+        print(f'Posizioni sopra ai Cutilisci non lette: {gaps}')
 
     # 3) Ritmo di nuove recensioni: dallo storico (servono almeno 4 settimane)
     sel = sorted(places.values(), key=lambda p: p['rank'])
