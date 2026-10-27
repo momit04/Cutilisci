@@ -1,0 +1,33 @@
+{
+ "date": "2026-10-27",
+ "updatedAt": "2026-10-27T17:05:53+01:00",
+ "me": 1739002,
+ "geo_id": 187888,
+ "pizza_source": null,
+ "rank_total": null,
+ "pizza_total": null,
+ "model": null,
+ "places": [
+  {
+   "id": 1739002,
+   "name": "Cutilisci",
+   "url": "https://www.tripadvisor.com/Restaurant_Review-g187888-d1739002-Reviews-Cutilisci-Catania_Province_of_Catania.html?m=70260",
+   "rank": null,
+   "rank_total": null,
+   "pizza_rank": null,
+   "pizza_total": null,
+   "pizza": true,
+   "reviews": 1890,
+   "avg": 3.9339,
+   "status": "OPEN",
+   "per_year": 0.0,
+   "per_year_src": "recensioni",
+   "per_year_date": "2026-10-27"
+  }
+ ],
+ "tracked": [
+  1739002
+ ],
+ "discoveredAt": "2026-10-27",
+ "billed_last_run": 1087
+}
