@@ -322,6 +322,7 @@ async function loadRank(d){
     const res=await fetch('classifica.json?'+Date.now(),{cache:'no-store'});
     if(!res.ok)throw new Error(res.status===404?'la classifica sarà disponibile dopo il primo aggiornamento.':'classifica.json non trovato ('+res.status+')');
     CL=await res.json();
+    if(CL.error)throw new Error(CL.error);
     ME=Object.assign({},CL.places.find(p=>p.id===CL.me));
     if(!ME.id)throw new Error('mancano i dati dei Cutilisci');
     // Dati di oggi dei Cutilisci (data.json si aggiorna ogni giorno, la classifica ogni settimana)

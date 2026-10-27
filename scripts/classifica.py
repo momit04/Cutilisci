@@ -372,7 +372,18 @@ def main():
         print(f'Letti i dettagli di {len(places)} locali; posizioni ancora mancanti: {len(missing())}')
 
     try:
-        read([me] + [i for i in tracked if i != me])
+        read([me])
+        if me in places and not places[me]['rank']:
+            # Senza posizione dei Cutilisci non ha senso cercare i concorrenti: mi fermo e non spendo nulla
+            msg = ("L'API Tripadvisor non fornisce la posizione in classifica con questa chiave "
+                   "(manca il campo rankings): classifica non disponibile.")
+            print(msg)
+            with open(OUT, 'w', encoding='utf-8') as f:
+                json.dump({'date': today.isoformat(), 'updatedAt': now.isoformat(timespec='seconds'),
+                           'error': msg}, f, ensure_ascii=False, indent=1)
+                f.write('\n')
+            return 0
+        read([i for i in tracked if i != me])
         if not tracked:
             search()
             disc_at = today.isoformat()
