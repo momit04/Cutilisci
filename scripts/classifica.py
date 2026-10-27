@@ -22,7 +22,7 @@ GEO = int(os.environ.get('GEO_ID') or 187888)              # Catania
 EVERY_DAYS = int(os.environ.get('EVERY_DAYS') or 7)         # ogni quanti giorni rileggere i concorrenti
 MARGIN = int(os.environ.get('MARGIN') or 5)                 # quante posizioni sotto ai Cutilisci seguire
 # Riquadro in cui cercare i ristoranti di Catania (sud-ovest, nord-est)
-BBOX = [float(v) for v in (os.environ.get('BBOX') or '37.42,14.98,37.57,15.16').split(',')]
+BBOX = [float(v) for v in (os.environ.get('BBOX') or '37.45,15.00,37.56,15.13').split(',')]
 MIN_RATING = os.environ.get('DISCOVERY_MIN_RATING') or '4'
 MAX_DISCOVERY = int(os.environ.get('MAX_DISCOVERY') or 1000)
 REDISCOVER_DAYS = 30
@@ -69,12 +69,33 @@ def discover(key):
     """Ristoranti nel riquadro di Catania (catalogo, non limitato dalla allowlist), con il numero di recensioni.
     Ordinati dal piu' recensito: chi sta in alto in classifica di solito ne ha tante."""
     global billed
+    found, with_cat = {}, True
+    for tile in tiles():
+        with_cat = search_tile(key, tile, found, with_cat)
+    print(f'Trovati {len(found)} ristoranti nel riquadro di Catania')
+    return sorted(found, key=lambda i: -found[i])
+
+
+def tiles():
+    """Tripadvisor accetta riquadri di massimo 50 km2: divido BBOX in pezzi da circa 40."""
     sw_lat, sw_lon, ne_lat, ne_lon = BBOX
+    km_lat = (ne_lat - sw_lat) * 111.0
+    km_lon = (ne_lon - sw_lon) * 111.0 * math.cos(math.radians((sw_lat + ne_lat) / 2))
+    n_lat, n_lon = max(1, math.ceil(km_lat / 6.3)), max(1, math.ceil(km_lon / 6.3))
+    dl, dn = (ne_lat - sw_lat) / n_lat, (ne_lon - sw_lon) / n_lon
+    return [(round(sw_lat + a * dl, 5), round(sw_lon + b * dn, 5), round(sw_lat + (a + 1) * dl, 5),
+             round(sw_lon + (b + 1) * dn, 5)) for a in range(n_lat) for b in range(n_lon)]
+
+
+def search_tile(key, tile, found, with_cat):
+    global billed
+    sw_lat, sw_lon, ne_lat, ne_lon = tile
     base = {'sw_lat': sw_lat, 'sw_lon': sw_lon, 'ne_lat': ne_lat, 'ne_lon': ne_lon, 'size': 20}
     if MIN_RATING:
         base['min_rating'] = MIN_RATING
-    found, page, with_cat = {}, 1, True
+    page = 1
     while len(found) < MAX_DISCOVERY:
+        time.sleep(0.5)  # la ricerca ha un limite di richieste piu' basso
         q = dict(base, page=page)
         if with_cat:
             q['category'] = 'RESTAURANT'
@@ -94,15 +115,35 @@ def discover(key):
         if not got or (tp is not None and page >= tp):
             break
         page += 1
-    print(f'Trovati {len(found)} ristoranti nel riquadro di Catania')
-    return sorted(found, key=lambda i: -found[i])
+    return with_cat
+
+
+allowed = None  # locali gia' nella allowlist (letta una volta, la lettura non e' fatturata)
 
 
 def allow(key, ids):
+    global allowed
+    if allowed is None:
+        allowed = set()
+        page = 0
+        while page < 50:
+            s, data, _ = api('GET', '/allowlist', key, {'page': page, 'version': 'v1'})
+            got = items(data) if s == 200 else []
+            if s == 200 and isinstance(data, dict) and not got:
+                got = data.get('allowlist') or []
+            allowed |= {int(x if not isinstance(x, dict) else x.get('id') or x.get('location_id') or 0) for x in got}
+            if len(got) < 1000:
+                break
+            page += 1
+    ids = [i for i in ids if i not in allowed]
     for i in range(0, len(ids), 500):
-        s, _, t = api('POST', '/allowlist', key, body={'operation_type': 'APPEND', 'allowlist': ids[i:i + 500]})
+        chunk = ids[i:i + 500]
+        s, _, t = api('POST', '/allowlist', key, body={'operation_type': 'APPEND', 'allowlist': chunk})
         if s >= 300:
             print(f'Allowlist: risposta {s} {t[:200]}')
+        else:
+            allowed |= set(chunk)
+        time.sleep(1)
 
 
 def details(key, ids):
@@ -303,7 +344,12 @@ def main():
     def read(ids):
         ids = [i for i in ids if i not in places]
         allow(key, ids)
-        places.update({i: parse_place(x) for i, x in details(key, ids).items()})
+        got = details(key, ids)
+        if me in got:
+            d = got[me]
+            print('Campi del locale:', ', '.join(sorted(d.keys())))
+            print('Posizioni trovate:', json.dumps(parse_rankings(d), ensure_ascii=False))
+        places.update({i: parse_place(x) for i, x in got.items()})
 
     def limit():
         return ((places.get(me) or {}).get('rank') or 85) + MARGIN

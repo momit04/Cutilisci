@@ -35,14 +35,24 @@ def show_limits(headers):
 
 
 def parse_rankings(d):
-    """Posizioni in classifica del locale (campo rankings di Location Details), in forma compatta."""
-    rk = d.get('rankings') or d.get('ranking') or []
-    if isinstance(rk, dict):
-        rk = [rk]
+    """Posizioni in classifica del locale, in forma compatta.
+    Cerco ovunque nella risposta gli oggetti con un campo 'rank' (il nome del contenitore puo' cambiare)."""
+    found = []
+
+    def walk(v):
+        if isinstance(v, dict):
+            if isinstance(v.get('rank'), int) or isinstance(v.get('ranking'), int):
+                found.append(v)
+            for x in v.values():
+                walk(x)
+        elif isinstance(v, list):
+            for x in v:
+                walk(x)
+    walk({k: v for k, v in d.items() if k not in ('reviews',)})
     out = []
-    for r in rk:
-        if not isinstance(r, dict) or r.get('rank') is None:
-            continue
+    for r in found:
+        r = dict(r, rank=r.get('rank', r.get('ranking')),
+                 total=r.get('total', r.get('ranking_out_of', r.get('out_of'))))
         out.append({k: r.get(k) for k in ('rank', 'total', 'category', 'category_id', 'geo', 'geo_id', 'display_text')
                     if r.get(k) is not None})
     return out
@@ -61,6 +71,8 @@ def fetch(key, loc):
         hint = ' (chiave non valida, limitata a un IP, o non abilitata a questo locale)' if status in (401, 403) else ''
         raise RuntimeError(f'Tripadvisor ha risposto {status}{hint}: {text[:300]}')
     d = json.loads(text)
+    print('Campi ricevuti:', ', '.join(sorted(d.keys())))
+    print('Classifica:', json.dumps([v for k, v in d.items() if 'rank' in k.lower()], ensure_ascii=False)[:600])
     br = (d.get('traveler_ratings') or {}).get('breakdowns')
     if not br:
         raise RuntimeError('Risposta senza traveler_ratings.breakdowns')
