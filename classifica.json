@@ -1,5 +1,5 @@
 {
  "date": "2026-10-27",
- "updatedAt": "2026-10-27T17:06:00+01:00",
- "error": "L'API Tripadvisor non fornisce la posizione in classifica con questa chiave (manca il campo rankings): classifica non disponibile."
+ "updatedAt": "2026-10-27T18:00:00+01:00",
+ "error": "In attesa del collegamento ad Apify: la classifica verrà letta una volta a settimana."
 }

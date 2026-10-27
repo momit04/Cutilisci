@@ -71,8 +71,6 @@ def fetch(key, loc):
         hint = ' (chiave non valida, limitata a un IP, o non abilitata a questo locale)' if status in (401, 403) else ''
         raise RuntimeError(f'Tripadvisor ha risposto {status}{hint}: {text[:300]}')
     d = json.loads(text)
-    print('Campi ricevuti:', ', '.join(sorted(d.keys())))
-    print('Classifica:', json.dumps([v for k, v in d.items() if 'rank' in k.lower()], ensure_ascii=False)[:600])
     br = (d.get('traveler_ratings') or {}).get('breakdowns')
     if not br:
         raise RuntimeError('Risposta senza traveler_ratings.breakdowns')

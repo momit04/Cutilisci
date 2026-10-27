@@ -13,7 +13,7 @@ on:
         type: boolean
         default: false
       classifica:
-        description: 'Rileggi subito la classifica dei concorrenti (di solito una volta a settimana)'
+        description: 'Rileggi subito la classifica con Apify (di solito una volta a settimana)'
         type: boolean
         default: false
 
@@ -38,11 +38,11 @@ jobs:
           FORCE: ${{ inputs.force }}
         run: python3 scripts/fetch.py
 
-      - name: Classifica Tripadvisor (concorrenti una volta a settimana)
+      - name: Classifica Tripadvisor con Apify (una volta a settimana)
         # Se la classifica non riesce, i dati di oggi vengono salvati lo stesso
         continue-on-error: true
         env:
-          TRIPADVISOR_API_KEY: ${{ secrets.TRIPADVISOR_API_KEY }}
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
           LOCATION_ID: ${{ vars.LOCATION_ID }}
           EVENT: ${{ github.event_name }}
           FORCE_CLASSIFICA: ${{ inputs.classifica }}

@@ -253,8 +253,11 @@ function meAfter(x,h){
 }
 function rkOf(p,t){return t==='p'?p.pizza_rank:p.rank}
 function needFor(target,h,t,off){
-  const m=CL.model,goal=score(proj(target,h),m);
-  const ok=x=>score(meAfter(x,h),m)+off>goal;
+  const m=CL.model;
+  // Con il punteggio vero di Tripadvisor (rawRanking) uso le distanze vere: il modello serve solo per i cambiamenti
+  const raw=m.kind==='raw'&&ME.raw!=null&&target.raw!=null;
+  const goal=raw?target.raw+score(proj(target,h),m)-score(target,m):score(proj(target,h),m);
+  const ok=raw?x=>ME.raw+score(meAfter(x,h),m)-score(ME,m)>goal:x=>score(meAfter(x,h),m)+off>goal;
   if(ok(0))return 0;
   let hi=1;while(!ok(hi)){hi*=2;if(hi>100000)return null}
   let lo=hi/2;while(hi-lo>1){const mid=Math.floor((lo+hi)/2);ok(mid)?hi=mid:lo=mid}
@@ -277,7 +280,7 @@ function rcalc(){
   if(!CL||!ME||!CL.model){tab.hidden=true;return}
   const t=$('rk').value,h=+$('rh').value,m=CL.model,my=rkOf(ME,t);
   const tot=t==='p'?CL.pizza_total:(CL.rank_total||ME.rank_total);
-  if(!my){out.innerHTML='<p class="msg">'+(t==='p'&&!CL.pizza_source?'Tripadvisor non fornisce la classifica delle pizzerie con questa chiave.':'Tripadvisor non mostra i Cutilisci in questa classifica.')+'</p>';tab.hidden=true;return}
+  if(!my){out.innerHTML='<p class="msg">'+(t==='p'&&!CL.pizza_source?'Classifica delle pizzerie non disponibile.':'Tripadvisor non mostra i Cutilisci in questa classifica.')+'</p>';tab.hidden=true;return}
   const ps=CL.places.filter(p=>p.id!==ME.id&&rkOf(p,t)&&rkOf(p,t)<my).sort((a,b)=>rkOf(a,t)-rkOf(b,t));
   const off=offset(t);
   const at=X=>ps.filter(p=>rkOf(p,t)>=X)[0]||null;
@@ -295,14 +298,14 @@ function rcalc(){
       const x=need[tg.id],P=rkOf(tg,t);
       head=x===null?'<div class="msg res-l">Con le sole recensioni da 5 stelle non si arriva, secondo il modello.</div>':
         '<div class="big">'+nf(x)+'</div><div class="res-l">recensioni da 5 stelle in più in '+h+' mesi per arrivare in posizione '+P+'</div>'+
-        '<p class="note" style="margin-top:6px">Circa <b>'+nf(x/h)+' al mese</b> oltre alle '+nf((ME.per_year||0)/12)+' che ricevi già. In posizione '+P+' oggi c’è <b>'+esc(tg.name)+'</b>: '+nf(tg.reviews)+' recensioni, voto '+fmt(tg.avg,2)+', circa '+nf((tg.per_year||0)/12)+' nuove al mese.'+
+        '<p class="note" style="margin-top:6px">Circa <b>'+nf(x/h)+' al mese</b>'+(ME.per_year==null?'':' oltre alle '+nf(ME.per_year/12)+' che ricevi già')+'. In posizione '+P+' oggi c’è <b>'+esc(tg.name)+'</b>: '+nf(tg.reviews)+' recensioni, voto '+fmt(tg.avg,2)+(tg.per_year==null?'':', circa '+nf(tg.per_year/12)+' nuove al mese')+'.'+
         (P!==X?' Del locale in posizione '+X+' non ho i dati: mostro quello subito dopo.':'')+'</p>';
     }
   }
   out.innerHTML=now+head;
   const want=[...new Set([1,2,3,5,10,15,20,30,50,75,100,my-1,my-3,my-5,X].filter(v=>v>=1&&v<my))].sort((a,b)=>a-b);
   tb.innerHTML=want.map(v=>{const p=at(v);if(!p||rkOf(p,t)!==v)return '';const x=need[p.id];
-    return '<tr><td>'+v+'</td><td>'+esc(p.name)+'<small>'+nf(p.reviews)+' recensioni · voto '+fmt(p.avg,1)+' · '+nf((p.per_year||0)/12)+'/mese</small></td><td>'+(x===null?'non basta':nf(x))+'</td></tr>'}).join('');
+    return '<tr><td>'+v+'</td><td>'+esc(p.name)+'<small>'+nf(p.reviews)+' recensioni · voto '+fmt(p.avg,1)+(p.per_year==null?'':' · '+nf(p.per_year/12)+'/mese')+'</small></td><td>'+(x===null?'non basta':nf(x))+'</td></tr>'}).join('');
   tab.hidden=!tb.innerHTML;
 }
 function esc(s){return String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';')}
@@ -312,8 +315,8 @@ function rnote(){
   const dt=new Date(CL.updatedAt);
   $('rnote').innerHTML='Stima. Tripadvisor non pubblica la formula: dice solo che contano qualità, quantità e soprattutto recensioni recenti. '+
     'Il modello impara il peso di ogni fattore dalla classifica vera ('+m.features.map((f,j)=>lab[f]+' '+Math.round(m.w[j]/tw*100)+'%').join(', ')+
-    ') e mette nell’ordine giusto il '+Math.round(m.accuracy*100)+'% delle coppie di locali. Si aggiorna da solo ogni settimana e migliora man mano che lo storico cresce. '+
-    'Gli altri locali sono proiettati al loro ritmo attuale di recensioni. '+
+    ')'+(m.kind==='raw'?' usando il punteggio interno di Tripadvisor (spiega il '+Math.round(m.r2*100)+'% delle differenze)':' e mette nell’ordine giusto il '+Math.round(m.accuracy*100)+'% delle coppie di locali')+'. Si aggiorna da solo ogni settimana e migliora man mano che lo storico cresce. '+
+    'Gli altri locali sono proiettati al loro ritmo attuale di recensioni (noto dopo 4 settimane di storico). '+
     'Classifica letta il '+(isNaN(dt)?CL.date:dt.toLocaleDateString('it-IT',{timeZone:'Europe/Rome'}))+' ('+CL.places.length+' locali seguiti'+(CL.pizza_source==='stima'?'; posizione tra le pizzerie stimata dall’ordine generale':'')+').';
 }
 async function loadRank(d){
