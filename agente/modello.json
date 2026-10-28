@@ -1,0 +1,18 @@
+{
+ "giorni": 1,
+ "ultimo": "2026-10-28",
+ "obiettivo_giorni": 7,
+ "citta": {
+  "catania": 1,
+  "roma": 1,
+  "milano": 1,
+  "napoli": 1,
+  "torino": 1,
+  "firenze": 1,
+  "bologna": 1,
+  "palermo": 1,
+  "genova": 1,
+  "venezia": 1
+ },
+ "storia": []
+}
