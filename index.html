@@ -92,16 +92,12 @@ td small{display:block;color:var(--mute);font-size:12px}
 <h1>Quante recensioni mancano ai Cutilisci?</h1>
 
 <section class="card">
-<h2>Le tue recensioni oggi</h2>
-<div class="grid">
-<label>5 stelle<span class="dots"><i class="on"></i></span><input id="c5" type="text" value="772" readonly tabindex="-1" aria-readonly="true"></label>
-<label>4 stelle<input id="c4" type="text" value="597" readonly tabindex="-1" aria-readonly="true"></label>
-<label>3 stelle<input id="c3" type="text" value="253" readonly tabindex="-1" aria-readonly="true"></label>
-<label>2 stelle<input id="c2" type="text" value="129" readonly tabindex="-1" aria-readonly="true"></label>
-<label>1 stella<input id="c1" type="text" value="130" readonly tabindex="-1" aria-readonly="true"></label>
+<h2>La tua posizione su Tripadvisor</h2>
+<div class="pos">
+<div><b id="pg">–</b><span id="pgs">in attesa del primo aggiornamento</span><small>Classifica ristoranti di Catania, ordine Pertinenza</small></div>
+<div><b id="pp">–</b><span id="pps">in attesa del primo aggiornamento</span><small>Elenco pizzerie di Catania, ordine Pertinenza</small></div>
 </div>
-<div class="upd"><span class="pulse" id="pulse"></span><p class="note" id="upmsg" aria-live="polite" style="margin:0">Aggiornamento automatico da Tripadvisor…</p></div>
-<a class="btn" id="tl" href="https://www.tripadvisor.it/Restaurant_Review-g187888-d1739002-Reviews-Cutilisci-Catania_Province_of_Catania_Sicily.html" target="_blank" rel="noopener">Apri Tripadvisor</a>
+<p class="note" id="posNote" style="margin-top:10px"></p>
 </section>
 
 <section class="card">
@@ -129,15 +125,26 @@ td small{display:block;color:var(--mute);font-size:12px}
 <table><thead><tr><th>Voto medio delle nuove</th><th>Recensioni mancanti</th></tr></thead><tbody id="tb"></tbody></table>
 </section>
 
-
 <section class="card">
-<h2>La tua posizione oggi</h2>
-<div class="pos">
-<div><b id="pg">–</b><span id="pgs">in attesa del primo aggiornamento</span><small>Classifica ristoranti di Catania, ordine Pertinenza</small></div>
-<div><b id="pp">–</b><span id="pps">in attesa del primo aggiornamento</span><small>Elenco pizzerie di Catania, ordine Pertinenza</small></div>
+<h2>I numeri di partenza</h2>
+<div class="grid">
+<label>5 stelle<span class="dots"><i class="on"></i></span><input id="c5" type="text" value="772" readonly tabindex="-1" aria-readonly="true"></label>
+<label>4 stelle<input id="c4" type="text" value="597" readonly tabindex="-1" aria-readonly="true"></label>
+<label>3 stelle<input id="c3" type="text" value="253" readonly tabindex="-1" aria-readonly="true"></label>
+<label>2 stelle<input id="c2" type="text" value="129" readonly tabindex="-1" aria-readonly="true"></label>
+<label>1 stella<input id="c1" type="text" value="130" readonly tabindex="-1" aria-readonly="true"></label>
 </div>
-<p class="note" id="posNote" style="margin-top:10px"></p>
+<div class="upd"><span class="pulse" id="pulse"></span><p class="note" id="upmsg" aria-live="polite" style="margin:0">Aggiornamento automatico da Tripadvisor…</p></div>
+<a class="btn" id="tl" href="https://www.tripadvisor.it/Restaurant_Review-g187888-d1739002-Reviews-Cutilisci-Catania_Province_of_Catania_Sicily.html" target="_blank" rel="noopener">Apri Tripadvisor</a>
 </section>
+
+
+
+
+
+
+
+
 
 </main>
 <div id="bar" role="status" aria-live="polite"><div class="in"><div id="bn">–</div><div id="bt">recensioni mancanti<small id="bs"></small></div></div></div>
