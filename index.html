@@ -104,19 +104,6 @@ td small{display:block;color:var(--mute);font-size:12px}
 <div id="out"></div>
 </section>
 
-<section class="card pace">
-<h2 style="text-align:left">Quante recensioni al giorno da 5 stelle sono necessarie?</h2>
-<div class="yl"><span style="color:var(--mute);font-size:14px">Tempo</span><b id="yv">2 anni</b></div>
-<input id="years" type="range" min="1" max="10" step="1" value="2" aria-label="Anni per raggiungere l'obiettivo">
-<div class="ticks" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span></div>
-<div id="pace" aria-live="polite"></div>
-</section>
-
-<section class="card">
-<h2>E se le nuove recensioni non sono tutte da 5 stelle?</h2>
-<table><thead><tr><th>Voto medio delle nuove</th><th>Recensioni mancanti</th></tr></thead><tbody id="tb"></tbody></table>
-</section>
-
 <section class="card">
 <h2>I numeri di partenza</h2>
 <div class="grid">
@@ -153,16 +140,6 @@ function need(S,N,T,m){
   while(x>1&&(S+m*(x-1))/(N+x-1)>=T-1e-12)x--;
   return x;
 }
-function fp(v){return v>=10?fmt(v,0):v>=1?fmt(v,1):fmt(v,2)}
-function pace(x){
-  const y=+$('years').value||1,d=y*365,el=$('pace');
-  $('yv').textContent=y+(y===1?' anno':' anni');
-  if(x===null){el.innerHTML='<div class="msg res-l" style="margin-top:14px">Obiettivo non raggiungibile con questo voto medio.</div>';return}
-  if(x===0){el.innerHTML='<div class="res-l" style="margin-top:14px">Obiettivo già raggiunto: non serve nulla.</div>';return}
-  const pd=x/d;
-  el.innerHTML='<div class="pbig">'+fp(pd)+' <small>al giorno</small></div>'+
-  '<div class="stats"><div><b>'+fp(pd*7)+'</b><small>a settimana</small></div><div><b>'+fp(pd*365/12)+'</b><small>al mese</small></div><div><b>'+(pd<1?'1 ogni '+fmt(1/pd,1)+' gg':fmt(Math.ceil(pd),0)+' al giorno')+'</b><small>'+(pd<1?'ritmo':'arrotondato')+'</small></div></div>';
-}
 function calc(){
   const c=[1,2,3,4,5].map(s=>Math.max(0,Math.floor(+$('c'+s).value||0)));
   const N=c.reduce((a,b)=>a+b,0);
@@ -172,10 +149,10 @@ function calc(){
   const target=Math.round((disp0+0.1)*10)/10;
   const shown=true; // Tripadvisor mostra il punteggio arrotondato a 1 decimale
   const T=shown?target-0.05:target;
-  const out=$('out'),tb=$('tb');window.__res=undefined;
-  if(N===0){showBar(null,'');pace(null);out.innerHTML='<div class="res-l">Inserisci almeno una recensione per iniziare.</div>';tb.innerHTML='';return}
+  const out=$('out');window.__res=undefined;
+  if(N===0){showBar(null,'');out.innerHTML='<div class="res-l">Inserisci almeno una recensione per iniziare.</div>';return}
   const avg=S/N, disp=Math.round(avg*10+1e-9)/10;
-  const x=need(S,N,T,m);window.__res=x;pace(x);
+  const x=need(S,N,T,m);window.__res=x;
   showBar(x,x===null?'alza il voto delle nuove':'per '+(shown?'vedere ':'una media di ')+fmt(target,1)+' · ora '+fmt(disp,1));if(x===0||x===null)$('bn').textContent=x===0?'0':'–';
   const fill=Math.max(0,Math.min(1,avg-0));
   let bub='';for(let i=0;i<5;i++){bub+='<span style="--f:'+Math.round(Math.max(0,Math.min(1,avg-i))*100)+'%"></span>'}
@@ -188,9 +165,8 @@ function calc(){
     head+='<div class="note" style="margin-top:6px">Con '+x.toLocaleString('it-IT')+' nuove recensioni da '+fmt(m,1)+' la media sale a '+fmt(after,4)+'.</div>';
   }
   out.innerHTML=head+'<div class="bub" aria-hidden="true">'+bub+'</div><div class="stats"><div><b>'+fmt(avg,4)+'</b><small>media esatta</small></div><div><b>'+fmt(disp,1)+'</b><small>punteggio mostrato</small></div><div><b>'+N.toLocaleString('it-IT')+'</b><small>recensioni</small></div></div>';
-  tb.innerHTML=[5,4.8,4.6,4.5,4.2].map(v=>{const r=need(S,N,T,v);return '<tr><td>'+fmt(v,1)+(v===5?' (tutte da 5 stelle)':'')+'</td><td>'+(r===null?'non basta':r.toLocaleString('it-IT'))+'</td></tr>'}).join('');
 }
-['c1','c2','c3','c4','c5','years'].forEach(id=>$(id).addEventListener('input',calc));
+['c1','c2','c3','c4','c5'].forEach(id=>$(id).addEventListener('input',calc));
 const DEF=[772,597,253,129,130];
 let toastT=null,busy=false;
 function showBar(x,label){
