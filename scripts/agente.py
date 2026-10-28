@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Agente che osserva la classifica Tripadvisor dei primi 100 ristoranti di Catania.
 
-Uso:  python3 scripts/agente.py add FILE.json [AAAA-MM-GG]
+Uso:  python3 scripts/agente.py add FILE.json CITTA [AAAA-MM-GG]   (CITTA = catania, roma, milano, ...)
   FILE.json = lista di {"rank": 1, "name": "...", "reviews": 1479, "avg": 4.8}
   Salva lo snapshot del giorno, riaddestra il modello su tutti i giorni raccolti
   e riscrive agente/modello.json e agente/rapporto.md.
@@ -26,16 +26,19 @@ TARGET = 'cutilisci'
 FEATS = ['log_totale', 'punteggio', 'recensioni_7gg', 'recensioni_ultimo_giorno']
 PRIOR = [0.0, 0.0, 1.0, 0.5]   # ipotesi di partenza: contano le recensioni recenti, non il punteggio
 PRIOR_STRENGTH = 200.0          # peso dell'ipotesi, in 'coppie equivalenti'
-DAYS_GOAL = 30
+DAYS_GOAL = 7
+CITIES = {'catania': 187888, 'roma': 187791, 'milano': 187849, 'napoli': 187785, 'torino': 187855,
+          'firenze': 187895, 'bologna': 187801, 'palermo': 187890, 'genova': 187823, 'venezia': 187870}
+MIN_ROWS = {'catania': 80}   # le altre citta' si leggono fino a 60
 
 
 def today_rome():
     return (datetime.now(timezone.utc) + timedelta(hours=1)).date().isoformat()
 
 
-def load_snaps():
+def load_snaps(city):
     out = []
-    for f in sorted(glob.glob(os.path.join(SNAP, '*.json'))):
+    for f in sorted(glob.glob(os.path.join(SNAP, city, '*.json'))):
         d = os.path.basename(f)[:-5]
         rows = json.load(open(f))
         out.append((d, {r['name']: r for r in rows}))
@@ -126,10 +129,11 @@ def single_accuracy(samples, k):
     return ok / tot if tot else None
 
 
-def swap_test(states):
+def swap_test(pooled):
     """Se il locale sotto porta piu' recensioni nuove di quello sopra, lo supera?"""
     buckets = {}
-    for (d0, s0), (d1, s1) in zip(states, states[1:]):
+    pairs = [p for states in pooled for p in zip(states, states[1:])]
+    for (d0, s0), (d1, s1) in pairs:
         if gap(d0, d1) > 2:
             continue
         names = sorted((k for k in s0 if k in s1), key=lambda k: s0[k]['rank'])
@@ -169,10 +173,12 @@ def estimate(st, w, mu, sd):
 
 
 def run():
-    snaps = load_snaps()
-    states = build_states(snaps)
-    n_days = len(snaps)
-    res = dict(giorni=n_days, ultimo=snaps[-1][0] if snaps else None, obiettivo_giorni=DAYS_GOAL)
+    per_city = {c: build_states(load_snaps(c)) for c in CITIES}
+    per_city = {c: st for c, st in per_city.items() if st}
+    days = sorted({d for st in per_city.values() for d, _ in st})
+    n_days = len(days)
+    res = dict(giorni=n_days, ultimo=days[-1] if days else None, obiettivo_giorni=DAYS_GOAL,
+               citta={c: len(st) for c, st in per_city.items()})
     prev_model = {}
     try:
         prev_model = json.load(open(os.path.join(DIR, 'modello.json')))
@@ -180,24 +186,33 @@ def run():
         pass
     history = prev_model.get('storia', [])
     if n_days >= 3:
-        # campioni: stato di ogni giorno dal secondo in poi (servono recensioni nuove)
-        all_samples = [s for d, st in states[1:] for s in pair_samples(st)]
+        all_states = [(c, d, st) for c, sts in per_city.items() for d, st in sts[1:]]
+        all_samples = [x for c, d, st in all_states for x in pair_samples(st)]
         mu, sd = standardizer(all_samples)
         w = fit(all_samples, mu, sd)
         res['pesi'] = dict(zip(FEATS, [round(x, 3) for x in w]))
         res['accuratezza_in_campione'] = round(accuracy(all_samples, w, sd), 3)
         res['singoli_fattori'] = {f: (None if single_accuracy(all_samples, k) is None else round(single_accuracy(all_samples, k), 3))
                                   for k, f in enumerate(FEATS)}
-        # verifica fuori campione: addestro fino a ieri, provo su oggi
+        # per citta': il modello comune funziona ovunque?
+        res['per_citta'] = {}
+        for c, sts in per_city.items():
+            sm = [x for d, st in sts[1:] for x in pair_samples(st)]
+            res['per_citta'][c] = dict(accuratezza=None if not sm else round(accuracy(sm, w, sd), 3),
+                                       recensioni_7gg=single_accuracy(sm, 2) and round(single_accuracy(sm, 2), 3),
+                                       punteggio=single_accuracy(sm, 1) and round(single_accuracy(sm, 1), 3))
         if n_days >= 4:
-            train = [s for d, st in states[1:-1] for s in pair_samples(st)]
-            mu2, sd2 = standardizer(train)
-            w2 = fit(train, mu2, sd2)
-            acc = accuracy(pair_samples(states[-1][1]), w2, sd2)
-            history = [h for h in history if h['data'] != snaps[-1][0]]
-            history.append(dict(data=snaps[-1][0], accuratezza_fuori_campione=round(acc, 3)))
-        res['stima'] = estimate(states[-1][1], w, mu, sd)
-        res['test_ipotesi'] = swap_test(states)
+            last = days[-1]
+            train = [x for c, sts in per_city.items() for d, st in sts[1:] if d != last for x in pair_samples(st)]
+            test = [x for c, sts in per_city.items() for d, st in sts if d == last for x in pair_samples(st)]
+            if train and test:
+                mu2, sd2 = standardizer(train)
+                w2 = fit(train, mu2, sd2)
+                history = [h for h in history if h['data'] != last]
+                history.append(dict(data=last, accuratezza_fuori_campione=round(accuracy(test, w2, sd2), 3)))
+        if 'catania' in per_city:
+            res['stima'] = estimate(per_city['catania'][-1][1], w, mu, sd)
+        res['test_ipotesi'] = swap_test(list(per_city.values()))
     res['storia'] = history
     json.dump(res, open(os.path.join(DIR, 'modello.json'), 'w'), ensure_ascii=False, indent=1)
     open(os.path.join(DIR, 'rapporto.md'), 'w').write(report(res))
@@ -206,7 +221,7 @@ def run():
 
 def report(r):
     L = ['# Agente classifica Tripadvisor – Catania', '',
-         f"Giorni osservati: **{r['giorni']} / {r['obiettivo_giorni']}** · ultimo dato: {r['ultimo']}", '']
+         f"Giorni osservati: **{r['giorni']} / {r['obiettivo_giorni']}** · ultimo dato: {r['ultimo']} · citta': {', '.join(r['citta'])}", '']
     if 'pesi' not in r:
         L += ['Servono almeno 3 giorni di dati per iniziare ad addestrare il modello.', '']
         return '\n'.join(L)
@@ -222,6 +237,10 @@ def report(r):
         last = r['storia'][-5:]
         L += ['## Previsione su dati nuovi (addestro fino a ieri, provo su oggi)', '',
               '| Data | Accuratezza |', '|---|---|'] + [f"| {h['data']} | {h['accuratezza_fuori_campione']} |" for h in last] + ['']
+    if r.get('per_citta'):
+        L += ['## Per citta\' (il modello comune vale ovunque?)', '', '| Citta\' | Modello | Solo recensioni 7gg | Solo punteggio |', '|---|---|---|---|']
+        L += [f"| {c} | {v['accuratezza']} | {v['recensioni_7gg']} | {v['punteggio']} |" for c, v in r['per_citta'].items()]
+        L += ['']
     L += ['## Test dell\'ipotesi: chi porta piu\' recensioni nuove del locale sopra lo supera?', '',
           '| Recensioni nuove in piu\' | Coppie | Sorpassi | Quota |', '|---|---|---|---|']
     L += [f"| {t['delta']} | {t['coppie']} | {t['sorpassi']} | {t['quota']} |" for t in r['test_ipotesi']]
@@ -242,23 +261,26 @@ def report(r):
     return '\n'.join(L)
 
 
-def add(path, day):
+def add(path, city, day):
+    if city not in CITIES:
+        sys.exit(f'Citta sconosciuta: {city}. Valide: {", ".join(CITIES)}')
     rows = json.load(open(path))
     rows = sorted((r for r in rows if r.get('rank') and r['rank'] <= 100), key=lambda r: r['rank'])
     clean = [dict(rank=int(r['rank']), name=r['name'].strip(), reviews=int(r['reviews']), avg=float(r['avg'])) for r in rows]
-    if len(clean) < 80:
-        sys.exit(f'Solo {len(clean)} locali: troppo pochi, snapshot non salvato.')
-    os.makedirs(SNAP, exist_ok=True)
-    json.dump(clean, open(os.path.join(SNAP, f'{day}.json'), 'w'), ensure_ascii=False)
-    run()
-    print(f'Snapshot {day} salvato ({len(clean)} locali).')
+    need = MIN_ROWS.get(city, 50)
+    if len(clean) < need:
+        sys.exit(f'{city}: solo {len(clean)} locali (servono almeno {need}), snapshot non salvato.')
+    os.makedirs(os.path.join(SNAP, city), exist_ok=True)
+    json.dump(clean, open(os.path.join(SNAP, city, f'{day}.json'), 'w'), ensure_ascii=False)
+    print(f'Snapshot {city} {day} salvato ({len(clean)} locali).')
 
 
 if __name__ == '__main__':
-    if len(sys.argv) >= 3 and sys.argv[1] == 'add':
-        add(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else today_rome())
+    if len(sys.argv) >= 4 and sys.argv[1] == 'add':
+        add(sys.argv[2], sys.argv[3].lower(), sys.argv[4] if len(sys.argv) > 4 else today_rome())
     elif len(sys.argv) >= 2 and sys.argv[1] == 'run':
         os.makedirs(DIR, exist_ok=True)
         run()
+        print('Modello aggiornato.')
     else:
         print(__doc__)
