@@ -78,6 +78,13 @@ input[type=range]{padding:0;border:0;background:transparent;height:34px;accent-c
 td small{display:block;color:var(--mute);font-size:12px}
 #cls .opts{grid-template-columns:1fr 1fr 1fr}
 @media(max-width:520px){#cls .opts{grid-template-columns:1fr}}
+
+.pos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.pos{grid-template-columns:1fr}}
+.pos div{background:var(--gsoft,#eef6f0);border-radius:12px;padding:14px 16px;min-width:0}
+.pos b{display:block;font-size:30px;font-weight:800;line-height:1.1;letter-spacing:-.02em;color:var(--g);font-variant-numeric:tabular-nums}
+.pos span{display:block;font-size:14px;margin-top:2px}
+.pos small{display:block;color:var(--mute);font-size:12.5px;margin-top:6px}
 </style>
 </head>
 <body>
@@ -122,6 +129,15 @@ td small{display:block;color:var(--mute);font-size:12px}
 <table><thead><tr><th>Voto medio delle nuove</th><th>Recensioni mancanti</th></tr></thead><tbody id="tb"></tbody></table>
 </section>
 
+
+<section class="card">
+<h2>La tua posizione oggi</h2>
+<div class="pos">
+<div><b id="pg">–</b><span id="pgs">in attesa del primo aggiornamento</span><small>Classifica ristoranti di Catania, ordine Pertinenza</small></div>
+<div><b id="pp">–</b><span id="pps">in attesa del primo aggiornamento</span><small>Elenco pizzerie di Catania, ordine Pertinenza</small></div>
+</div>
+<p class="note" id="posNote" style="margin-top:10px"></p>
+</section>
 
 </main>
 <div id="bar" role="status" aria-live="polite"><div class="in"><div id="bn">–</div><div id="bt">recensioni mancanti<small id="bs"></small></div></div></div>
@@ -231,6 +247,17 @@ async function load(){
 showLoad(true);
 load();
 calc();
+
+(async()=>{
+  try{
+    const r=await fetch('posizioni.json?'+Date.now(),{cache:'no-store'});
+    if(!r.ok)return;
+    const d=await r.json(),it=n=>n.toLocaleString('it-IT');
+    if(d.generale){$('pg').textContent=d.generale.pos+'°';$('pgs').textContent='su '+it(d.generale.totale)+' ristoranti a Catania'}
+    if(d.pizzerie){$('pp').textContent=d.pizzerie.pos+'°';$('pps').textContent='su '+it(d.pizzerie.totale)+' pizzerie a Catania'}
+    if(d.ts){const t=new Date(d.ts);if(!isNaN(t))$('posNote').textContent='Aggiornato il '+t.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Rome'})+'. Si aggiorna ogni tre giorni.'}
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
