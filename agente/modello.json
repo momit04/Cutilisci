@@ -1,18 +1,128 @@
 {
- "giorni": 2,
- "ultimo": "2026-10-29",
+ "giorni": 3,
+ "ultimo": "2026-10-30",
  "obiettivo_giorni": 7,
  "citta": {
-  "catania": 2,
-  "roma": 2,
-  "milano": 2,
-  "napoli": 2,
-  "torino": 2,
-  "firenze": 2,
-  "bologna": 2,
-  "palermo": 2,
-  "genova": 2,
-  "venezia": 2
+  "catania": 3,
+  "roma": 3,
+  "milano": 3,
+  "napoli": 3,
+  "torino": 3,
+  "firenze": 3,
+  "bologna": 3,
+  "palermo": 3,
+  "genova": 3,
+  "venezia": 3
  },
+ "pesi": {
+  "log_totale": 0.094,
+  "punteggio": 0.192,
+  "recensioni_7gg": 0.309,
+  "recensioni_ultimo_giorno": -0.191
+ },
+ "accuratezza_in_campione": 0.559,
+ "singoli_fattori": {
+  "log_totale": 0.51,
+  "punteggio": 0.556,
+  "recensioni_7gg": 0.534,
+  "recensioni_ultimo_giorno": 0.534
+ },
+ "per_citta": {
+  "catania": {
+   "accuratezza": 0.567,
+   "recensioni_7gg": 0.593,
+   "punteggio": 0.554
+  },
+  "roma": {
+   "accuratezza": 0.527,
+   "recensioni_7gg": 0.488,
+   "punteggio": 0.561
+  },
+  "milano": {
+   "accuratezza": 0.581,
+   "recensioni_7gg": 0.554,
+   "punteggio": 0.551
+  },
+  "napoli": {
+   "accuratezza": 0.562,
+   "recensioni_7gg": 0.608,
+   "punteggio": 0.544
+  },
+  "torino": {
+   "accuratezza": 0.561,
+   "recensioni_7gg": 0.571,
+   "punteggio": 0.574
+  },
+  "firenze": {
+   "accuratezza": 0.537,
+   "recensioni_7gg": 0.559,
+   "punteggio": 0.509
+  },
+  "bologna": {
+   "accuratezza": 0.564,
+   "recensioni_7gg": 0.474,
+   "punteggio": 0.578
+  },
+  "palermo": {
+   "accuratezza": 0.553,
+   "recensioni_7gg": 0.469,
+   "punteggio": 0.558
+  },
+  "genova": {
+   "accuratezza": 0.58,
+   "recensioni_7gg": 0.622,
+   "punteggio": 0.605
+  },
+  "venezia": {
+   "accuratezza": 0.551,
+   "recensioni_7gg": 0.522,
+   "punteggio": 0.528
+  }
+ },
+ "stima": {
+  "davanti": "Ciauru i Mari",
+  "posizione_davanti": 57,
+  "posizione_tua": 58,
+  "recensioni_5_stelle": 1,
+  "ipotesi": "tutte le recensioni arrivano entro 7 giorni"
+ },
+ "test_ipotesi": [
+  {
+   "delta": "<=0",
+   "coppie": 3439,
+   "sorpassi": 52,
+   "quota": 0.015
+  },
+  {
+   "delta": "1",
+   "coppie": 170,
+   "sorpassi": 7,
+   "quota": 0.041
+  },
+  {
+   "delta": "2",
+   "coppie": 56,
+   "sorpassi": 4,
+   "quota": 0.071
+  },
+  {
+   "delta": "3",
+   "coppie": 22,
+   "sorpassi": 0,
+   "quota": 0.0
+  },
+  {
+   "delta": "4",
+   "coppie": 10,
+   "sorpassi": 0,
+   "quota": 0.0
+  },
+  {
+   "delta": "5+",
+   "coppie": 5,
+   "sorpassi": 0,
+   "quota": 0.0
+  }
+ ],
  "storia": []
 }
