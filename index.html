@@ -231,7 +231,7 @@ calc();
     const d=await r.json(),it=n=>n.toLocaleString('it-IT');
     if(d.generale){$('pg').textContent=d.generale.pos+'°';$('pgs').textContent='su '+it(d.generale.totale)+' ristoranti a Catania'}
     if(d.pizzerie){$('pp').textContent=d.pizzerie.pos+'°';$('pps').textContent='su '+it(d.pizzerie.totale)+' pizzerie a Catania'}
-    if(d.ts){const t=new Date(d.ts);if(!isNaN(t))$('posNote').textContent='Aggiornato il '+t.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Rome'})+'. Si aggiorna ogni tre giorni.'}
+    if(d.ts){const t=new Date(d.ts);if(!isNaN(t))$('posNote').textContent='Aggiornato il '+t.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Rome'})+'. Si aggiorna ogni giorno.'}
   }catch(e){}
 })();
 </script>
