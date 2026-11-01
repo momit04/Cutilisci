@@ -97,7 +97,7 @@ td small{display:block;color:var(--mute);font-size:12px}
 <div><b id="pg">–</b><span id="pgs">in attesa del primo aggiornamento</span><small>Classifica ristoranti di Catania (In primo piano)</small></div>
 <div><b id="pp">–</b><span id="pps">in attesa del primo aggiornamento</span><small>Elenco pizzerie di Catania, ordine Pertinenza</small></div>
 </div>
-<p class="note" id="posNote" style="margin-top:10px">Si aggiorna ogni giorno.</p>
+<p class="note" id="posNote" style="margin-top:10px">Si aggiorna ogni tre giorni.</p>
 </section>
 
 <section class="card result" aria-live="polite">
@@ -231,7 +231,7 @@ calc();
     const d=await r.json(),it=n=>n.toLocaleString('it-IT');
     if(d.generale){$('pg').textContent=d.generale.pos+'°';$('pgs').textContent='su '+it(d.generale.totale)+' ristoranti a Catania'}
     if(d.pizzerie){$('pp').textContent=d.pizzerie.pos+'°';$('pps').textContent='su '+it(d.pizzerie.totale)+' pizzerie a Catania'}
-    if(d.ts){const t=new Date(d.ts);if(!isNaN(t))$('posNote').textContent='Aggiornato il '+t.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Rome'})+'. Si aggiorna ogni giorno.'}
+    if(d.ts){const t=new Date(d.ts);if(!isNaN(t))$('posNote').textContent='Aggiornato il '+t.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Rome'})+'. Si aggiorna ogni tre giorni.'}
   }catch(e){}
 })();
 </script>
