@@ -1,5 +1,11 @@
 {
-  "generale": {"pos": 58, "totale": 1432},
-  "pizzerie": {"pos": 10, "totale": 302},
-  "ts": "2026-11-01T10:24:54+01:00"
+  "generale": {
+    "pos": 64,
+    "totale": 1432
+  },
+  "pizzerie": {
+    "pos": 10,
+    "totale": 302
+  },
+  "ts": "2026-11-01T10:37:00+01:00"
 }
