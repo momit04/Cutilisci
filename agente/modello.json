@@ -1,82 +1,82 @@
 {
- "giorni": 5,
- "ultimo": "2026-11-01",
+ "giorni": 6,
+ "ultimo": "2026-11-02",
  "obiettivo_giorni": 7,
  "citta": {
-  "catania": 5,
-  "roma": 5,
-  "milano": 5,
-  "napoli": 5,
-  "torino": 5,
-  "firenze": 5,
-  "bologna": 5,
-  "palermo": 5,
-  "genova": 5,
-  "venezia": 5
+  "catania": 6,
+  "roma": 6,
+  "milano": 6,
+  "napoli": 6,
+  "torino": 6,
+  "firenze": 6,
+  "bologna": 6,
+  "palermo": 6,
+  "genova": 6,
+  "venezia": 6
  },
  "pesi": {
-  "log_totale": 0.105,
-  "punteggio": 0.218,
-  "recensioni_7gg": 0.139,
-  "recensioni_ultimo_giorno": -0.018
+  "log_totale": 0.106,
+  "punteggio": 0.224,
+  "recensioni_7gg": 0.125,
+  "recensioni_ultimo_giorno": 0.008
  },
- "accuratezza_in_campione": 0.562,
+ "accuratezza_in_campione": 0.565,
  "singoli_fattori": {
-  "log_totale": 0.511,
-  "punteggio": 0.555,
-  "recensioni_7gg": 0.543,
-  "recensioni_ultimo_giorno": 0.539
+  "log_totale": 0.512,
+  "punteggio": 0.554,
+  "recensioni_7gg": 0.545,
+  "recensioni_ultimo_giorno": 0.54
  },
  "per_citta": {
   "catania": {
-   "accuratezza": 0.567,
-   "recensioni_7gg": 0.567,
+   "accuratezza": 0.568,
+   "recensioni_7gg": 0.556,
    "punteggio": 0.554
   },
   "roma": {
-   "accuratezza": 0.543,
-   "recensioni_7gg": 0.531,
-   "punteggio": 0.558
+   "accuratezza": 0.545,
+   "recensioni_7gg": 0.537,
+   "punteggio": 0.557
   },
   "milano": {
-   "accuratezza": 0.58,
-   "recensioni_7gg": 0.558,
-   "punteggio": 0.55
+   "accuratezza": 0.578,
+   "recensioni_7gg": 0.554,
+   "punteggio": 0.549
   },
   "napoli": {
-   "accuratezza": 0.564,
-   "recensioni_7gg": 0.592,
-   "punteggio": 0.543
+   "accuratezza": 0.57,
+   "recensioni_7gg": 0.589,
+   "punteggio": 0.542
   },
   "torino": {
-   "accuratezza": 0.561,
-   "recensioni_7gg": 0.571,
+   "accuratezza": 0.563,
+   "recensioni_7gg": 0.565,
    "punteggio": 0.572
   },
   "firenze": {
-   "accuratezza": 0.542,
-   "recensioni_7gg": 0.565,
-   "punteggio": 0.516
+   "accuratezza": 0.55,
+   "recensioni_7gg": 0.571,
+   "punteggio": 0.517
   },
   "bologna": {
-   "accuratezza": 0.571,
-   "recensioni_7gg": 0.489,
+   "accuratezza": 0.578,
+   "recensioni_7gg": 0.492,
    "punteggio": 0.579
   },
   "palermo": {
-   "accuratezza": 0.562,
-   "recensioni_7gg": 0.492,
+   "accuratezza": 0.559,
+   "recensioni_7gg": 0.501,
    "punteggio": 0.554
   },
   "genova": {
-   "accuratezza": 0.578,
-   "recensioni_7gg": 0.573,
-   "punteggio": 0.601
+   "accuratezza": 0.581,
+   "recensioni_7gg": 0.584,
+   "punteggio": 0.6
   },
   "venezia": {
-   "accuratezza": 0.549,
-   "recensioni_7gg": 0.529,
-   "punteggio": 0.523
+   "accuratezza": 0.555,
+   "recensioni_7gg": 0.531,
+   "punteggio": 0.522
   }
  },
  "stima": {
@@ -89,37 +89,37 @@
  "test_ipotesi": [
   {
    "delta": "<=0",
-   "coppie": 6594,
+   "coppie": 8161,
    "sorpassi": 116,
-   "quota": 0.018
+   "quota": 0.014
   },
   {
    "delta": "1",
-   "coppie": 492,
+   "coppie": 671,
    "sorpassi": 14,
-   "quota": 0.028
+   "quota": 0.021
   },
   {
    "delta": "2",
-   "coppie": 191,
+   "coppie": 246,
    "sorpassi": 8,
-   "quota": 0.042
+   "quota": 0.033
   },
   {
    "delta": "3",
-   "coppie": 54,
+   "coppie": 75,
    "sorpassi": 2,
-   "quota": 0.037
+   "quota": 0.027
   },
   {
    "delta": "4",
-   "coppie": 42,
+   "coppie": 44,
    "sorpassi": 2,
-   "quota": 0.048
+   "quota": 0.045
   },
   {
    "delta": "5+",
-   "coppie": 34,
+   "coppie": 55,
    "sorpassi": 0,
    "quota": 0.0
   }
@@ -132,6 +132,10 @@
   {
    "data": "2026-11-01",
    "accuratezza_fuori_campione": 0.557
+  },
+  {
+   "data": "2026-11-02",
+   "accuratezza_fuori_campione": 0.562
   }
  ]
 }
