@@ -1,127 +1,127 @@
 {
- "giorni": 6,
- "ultimo": "2026-11-02",
+ "giorni": 7,
+ "ultimo": "2026-11-03",
  "obiettivo_giorni": 7,
  "citta": {
-  "catania": 6,
-  "roma": 6,
-  "milano": 6,
-  "napoli": 6,
-  "torino": 6,
-  "firenze": 6,
-  "bologna": 6,
-  "palermo": 6,
-  "genova": 6,
-  "venezia": 6
+  "catania": 7,
+  "roma": 7,
+  "milano": 7,
+  "napoli": 7,
+  "torino": 7,
+  "firenze": 7,
+  "bologna": 7,
+  "palermo": 7,
+  "genova": 7,
+  "venezia": 7
  },
  "pesi": {
   "log_totale": 0.106,
-  "punteggio": 0.224,
-  "recensioni_7gg": 0.125,
+  "punteggio": 0.228,
+  "recensioni_7gg": 0.13,
   "recensioni_ultimo_giorno": 0.008
  },
- "accuratezza_in_campione": 0.565,
+ "accuratezza_in_campione": 0.566,
  "singoli_fattori": {
-  "log_totale": 0.512,
+  "log_totale": 0.511,
   "punteggio": 0.554,
   "recensioni_7gg": 0.545,
-  "recensioni_ultimo_giorno": 0.54
+  "recensioni_ultimo_giorno": 0.538
  },
  "per_citta": {
   "catania": {
-   "accuratezza": 0.568,
-   "recensioni_7gg": 0.556,
+   "accuratezza": 0.571,
+   "recensioni_7gg": 0.546,
    "punteggio": 0.554
   },
   "roma": {
-   "accuratezza": 0.545,
+   "accuratezza": 0.548,
    "recensioni_7gg": 0.537,
-   "punteggio": 0.557
+   "punteggio": 0.555
   },
   "milano": {
-   "accuratezza": 0.578,
-   "recensioni_7gg": 0.554,
-   "punteggio": 0.549
+   "accuratezza": 0.579,
+   "recensioni_7gg": 0.558,
+   "punteggio": 0.548
   },
   "napoli": {
-   "accuratezza": 0.57,
-   "recensioni_7gg": 0.589,
+   "accuratezza": 0.568,
+   "recensioni_7gg": 0.591,
    "punteggio": 0.542
   },
   "torino": {
-   "accuratezza": 0.563,
-   "recensioni_7gg": 0.565,
-   "punteggio": 0.572
+   "accuratezza": 0.567,
+   "recensioni_7gg": 0.553,
+   "punteggio": 0.569
   },
   "firenze": {
    "accuratezza": 0.55,
-   "recensioni_7gg": 0.571,
+   "recensioni_7gg": 0.57,
    "punteggio": 0.517
   },
   "bologna": {
-   "accuratezza": 0.578,
-   "recensioni_7gg": 0.492,
-   "punteggio": 0.579
+   "accuratezza": 0.572,
+   "recensioni_7gg": 0.491,
+   "punteggio": 0.578
   },
   "palermo": {
-   "accuratezza": 0.559,
-   "recensioni_7gg": 0.501,
-   "punteggio": 0.554
+   "accuratezza": 0.556,
+   "recensioni_7gg": 0.505,
+   "punteggio": 0.552
   },
   "genova": {
-   "accuratezza": 0.581,
-   "recensioni_7gg": 0.584,
-   "punteggio": 0.6
+   "accuratezza": 0.587,
+   "recensioni_7gg": 0.58,
+   "punteggio": 0.601
   },
   "venezia": {
-   "accuratezza": 0.555,
-   "recensioni_7gg": 0.531,
-   "punteggio": 0.522
+   "accuratezza": 0.558,
+   "recensioni_7gg": 0.534,
+   "punteggio": 0.523
   }
  },
  "stima": {
-  "davanti": "Ciauru i Mari",
-  "posizione_davanti": 57,
-  "posizione_tua": 58,
+  "davanti": "Canni & Pisci - Meat & Fish",
+  "posizione_davanti": 58,
+  "posizione_tua": 59,
   "recensioni_5_stelle": 6,
   "ipotesi": "tutte le recensioni arrivano entro 7 giorni"
  },
  "test_ipotesi": [
   {
    "delta": "<=0",
-   "coppie": 8161,
-   "sorpassi": 116,
-   "quota": 0.014
+   "coppie": 9677,
+   "sorpassi": 215,
+   "quota": 0.022
   },
   {
    "delta": "1",
-   "coppie": 671,
-   "sorpassi": 14,
-   "quota": 0.021
+   "coppie": 863,
+   "sorpassi": 24,
+   "quota": 0.028
   },
   {
    "delta": "2",
-   "coppie": 246,
-   "sorpassi": 8,
-   "quota": 0.033
+   "coppie": 315,
+   "sorpassi": 14,
+   "quota": 0.044
   },
   {
    "delta": "3",
-   "coppie": 75,
-   "sorpassi": 2,
-   "quota": 0.027
+   "coppie": 104,
+   "sorpassi": 6,
+   "quota": 0.058
   },
   {
    "delta": "4",
-   "coppie": 44,
+   "coppie": 59,
    "sorpassi": 2,
-   "quota": 0.045
+   "quota": 0.034
   },
   {
    "delta": "5+",
-   "coppie": 55,
-   "sorpassi": 0,
-   "quota": 0.0
+   "coppie": 70,
+   "sorpassi": 3,
+   "quota": 0.043
   }
  ],
  "storia": [
@@ -136,6 +136,10 @@
   {
    "data": "2026-11-02",
    "accuratezza_fuori_campione": 0.562
+  },
+  {
+   "data": "2026-11-03",
+   "accuratezza_fuori_campione": 0.567
   }
  ]
 }
