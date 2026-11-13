@@ -1,24 +1,24 @@
 {
- "giorni": 16,
- "ultimo": "2026-11-12",
+ "giorni": 17,
+ "ultimo": "2026-11-13",
  "obiettivo_giorni": 7,
  "citta": {
-  "catania": 16,
-  "roma": 16,
-  "milano": 16,
-  "napoli": 16,
-  "torino": 16,
-  "firenze": 16,
-  "bologna": 16,
-  "palermo": 16,
-  "genova": 16,
-  "venezia": 16
+  "catania": 17,
+  "roma": 17,
+  "milano": 17,
+  "napoli": 17,
+  "torino": 17,
+  "firenze": 17,
+  "bologna": 17,
+  "palermo": 17,
+  "genova": 17,
+  "venezia": 17
  },
  "pesi": {
   "log_totale": 0.105,
-  "punteggio": 0.252,
-  "recensioni_7gg": 0.164,
-  "recensioni_ultimo_giorno": 0.009
+  "punteggio": 0.254,
+  "recensioni_7gg": 0.167,
+  "recensioni_ultimo_giorno": 0.006
  },
  "accuratezza_in_campione": 0.57,
  "singoli_fattori": {
@@ -29,99 +29,99 @@
  },
  "per_citta": {
   "catania": {
-   "accuratezza": 0.58,
-   "recensioni_7gg": 0.546,
-   "punteggio": 0.558
+   "accuratezza": 0.579,
+   "recensioni_7gg": 0.547,
+   "punteggio": 0.559
   },
   "roma": {
-   "accuratezza": 0.556,
-   "recensioni_7gg": 0.542,
+   "accuratezza": 0.558,
+   "recensioni_7gg": 0.543,
    "punteggio": 0.557
   },
   "milano": {
-   "accuratezza": 0.584,
-   "recensioni_7gg": 0.549,
+   "accuratezza": 0.582,
+   "recensioni_7gg": 0.548,
    "punteggio": 0.552
   },
   "napoli": {
-   "accuratezza": 0.561,
-   "recensioni_7gg": 0.571,
-   "punteggio": 0.53
+   "accuratezza": 0.559,
+   "recensioni_7gg": 0.57,
+   "punteggio": 0.528
   },
   "torino": {
-   "accuratezza": 0.568,
-   "recensioni_7gg": 0.512,
-   "punteggio": 0.566
+   "accuratezza": 0.566,
+   "recensioni_7gg": 0.51,
+   "punteggio": 0.565
   },
   "firenze": {
-   "accuratezza": 0.563,
+   "accuratezza": 0.566,
    "recensioni_7gg": 0.563,
-   "punteggio": 0.519
+   "punteggio": 0.518
   },
   "bologna": {
    "accuratezza": 0.573,
    "recensioni_7gg": 0.513,
-   "punteggio": 0.577
+   "punteggio": 0.578
   },
   "palermo": {
-   "accuratezza": 0.56,
-   "recensioni_7gg": 0.525,
+   "accuratezza": 0.561,
+   "recensioni_7gg": 0.526,
    "punteggio": 0.554
   },
   "genova": {
    "accuratezza": 0.591,
-   "recensioni_7gg": 0.571,
+   "recensioni_7gg": 0.57,
    "punteggio": 0.596
   },
   "venezia": {
-   "accuratezza": 0.56,
+   "accuratezza": 0.559,
    "recensioni_7gg": 0.537,
-   "punteggio": 0.526
+   "punteggio": 0.527
   }
  },
  "stima": {
   "davanti": "Scalia Comida Mexicana",
   "posizione_davanti": 54,
   "posizione_tua": 55,
-  "recensioni_5_stelle": 12,
+  "recensioni_5_stelle": 13,
   "ipotesi": "tutte le recensioni arrivano entro 7 giorni"
  },
  "test_ipotesi": [
   {
    "delta": "<=0",
-   "coppie": 24134,
-   "sorpassi": 653,
+   "coppie": 25809,
+   "sorpassi": 702,
    "quota": 0.027
   },
   {
    "delta": "1",
-   "coppie": 2319,
-   "sorpassi": 83,
-   "quota": 0.036
+   "coppie": 2444,
+   "sorpassi": 85,
+   "quota": 0.035
   },
   {
    "delta": "2",
-   "coppie": 736,
+   "coppie": 762,
    "sorpassi": 35,
-   "quota": 0.048
+   "quota": 0.046
   },
   {
    "delta": "3",
-   "coppie": 250,
+   "coppie": 261,
    "sorpassi": 15,
-   "quota": 0.06
+   "quota": 0.057
   },
   {
    "delta": "4",
-   "coppie": 138,
+   "coppie": 141,
    "sorpassi": 4,
-   "quota": 0.029
+   "quota": 0.028
   },
   {
    "delta": "5+",
-   "coppie": 143,
+   "coppie": 151,
    "sorpassi": 6,
-   "quota": 0.042
+   "quota": 0.04
   }
  ],
  "storia": [
@@ -176,6 +176,10 @@
   {
    "data": "2026-11-12",
    "accuratezza_fuori_campione": 0.565
+  },
+  {
+   "data": "2026-11-13",
+   "accuratezza_fuori_campione": 0.568
   }
  ]
 }
