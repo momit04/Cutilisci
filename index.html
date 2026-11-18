@@ -197,7 +197,7 @@ h2{font-size:14px;margin-bottom:8px}
 <div><h3>Premio Best of the Best</h3><p class="tag gold">I migliori 1% dei ristoranti al mondo</p></div>
 </div>
 <b class="n gold" id="bbN">–</b>
-<span class="l" id="bbL">posizioni mancanti per essere eleggibili</span>
+<span class="l" id="bbL">posizioni mancanti da scalare</span>
 <ul class="req">
 <li id="bbR1"><i class="no">✗</i><span>Serve entrare tra i primi 14 della classifica di Catania<small id="bbR1t"></small></span></li>
 </ul>
@@ -293,8 +293,8 @@ function premioTop10(pos,tot){
 // Premio Best of the Best: posizioni mancanti = posizione attuale − 14
 function premioBB(pos){
   const m=pos-14;
-  if(m>0){$('bbN').textContent=m.toLocaleString('it-IT');$('bbL').textContent='posizioni mancanti per essere eleggibili (ora '+pos+'°)'}
-  else{$('bbN').textContent='0';$('bbL').textContent='posizioni mancanti: sei tra i primi 14 ('+pos+'°)'}
+  if(m>0){$('bbN').textContent=m.toLocaleString('it-IT');$('bbL').textContent='posizioni mancanti da scalare (ora '+pos+'°)'}
+  else{$('bbN').textContent='0';$('bbL').textContent='posizioni mancanti da scalare: sei tra i primi 14 ('+pos+'°)'}
   setReq('bbR1',m<=0,'');
 }
 ['c1','c2','c3','c4','c5'].forEach(id=>$(id).addEventListener('input',calc));
