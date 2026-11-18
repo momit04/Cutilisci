@@ -144,7 +144,7 @@ td small{display:block;color:var(--mute);font-size:12px}
 </svg>
 <div>
 <h3>Premio Travellers' Choice</h3>
-<p class="per" id="tcPer">Periodo di assegnazione: recensioni dal 1° gennaio al 31 dicembre</p>
+<p class="per" id="tcPer">Periodo di assegnazione: recensioni dal 1° luglio al 30 giugno</p>
 <b class="n" id="tcN">–</b>
 <span class="l" id="tcL">recensioni da 5 stelle mancanti per avere 4,0</span>
 <small id="tcS">Serve un punteggio di almeno 4,0 e stare nel 10% migliore dei locali.</small>
@@ -226,10 +226,14 @@ function calc(){
 }
 // Premio Travellers' Choice: quante recensioni da 5 stelle servono per vedere 4,0 (media ≥ 3,95)
 function premioTC(S,N){
-  const y=+new Date().toLocaleString('en-US',{year:'numeric',timeZone:'Europe/Rome'});
-  const fine=new Date(y,11,31,23,59,59),oggi=new Date();
+  // Premi ristoranti: recensioni dal 1° luglio al 30 giugno, premio annunciato a settembre (come nel 2026)
+  const oggi=new Date();
+  const y=+oggi.toLocaleString('en-US',{year:'numeric',timeZone:'Europe/Rome'});
+  const mese=+oggi.toLocaleString('en-US',{month:'numeric',timeZone:'Europe/Rome'});
+  const y0=mese>=7?y:y-1,y1=y0+1;
+  const fine=new Date(y1,5,30,23,59,59);
   const gg=Math.max(0,Math.ceil((fine-oggi)/864e5));
-  $('tcPer').textContent='Periodo di assegnazione: recensioni dal 1° gennaio al 31 dicembre '+y+' · premio assegnato nel '+(y+1)+' · mancano '+gg+' giorni alla fine del periodo';
+  $('tcPer').textContent='Periodo di assegnazione: recensioni dal 1° luglio '+y0+' al 30 giugno '+y1+' · premio annunciato a settembre '+y1+' · mancano '+gg+' giorni alla fine del periodo';
   if(!N)return;
   const x=need(S,N,3.95,5),disp=Math.round(S/N*10+1e-9)/10;
   if(x===0){$('tcN').textContent='0';$('tcL').textContent='Hai già 4,0: requisito del punteggio raggiunto'}
