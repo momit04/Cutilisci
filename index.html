@@ -106,6 +106,7 @@ td small{display:block;color:var(--mute);font-size:12px}
 .req i{flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:13px;color:#fff}
 .req i.ok{background:var(--g)}
 .req i.no{background:var(--warn)}
+.req small{margin-top:2px}
 </style>
 </head>
 <body>
@@ -158,8 +159,8 @@ td small{display:block;color:var(--mute);font-size:12px}
 <b class="n" id="tcN">–</b>
 <span class="l" id="tcL">recensioni da 5 stelle mancanti per avere 4,0</span>
 <ul class="req">
-<li id="tcR1"><i class="no">✗</i><span>Serve un punteggio di almeno 4,0: <b id="tcR1t">–</b></span></li>
-<li id="tcR2"><i class="no">✗</i><span>Serve essere nei migliori 10 per cento: <b id="tcR2t">in attesa della posizione</b></span></li>
+<li id="tcR1"><i class="no">✗</i><span>Serve un punteggio di almeno 4,0<b id="tcR1t"></b></span></li>
+<li id="tcR2"><i class="no">✗</i><span>Serve essere nei migliori 10 per cento<small id="tcR2t"></small></span></li>
 </ul>
 </div>
 </div>
@@ -252,7 +253,7 @@ function premioTC(S,N){
   const x=need(S,N,3.95,5),disp=Math.round(S/N*10+1e-9)/10;
   if(x===0){$('tcN').textContent='0';$('tcL').textContent='Hai già 4,0: requisito del punteggio raggiunto'}
   else{$('tcN').textContent=x.toLocaleString('it-IT');$('tcL').textContent='recensioni da 5 stelle mancanti per avere 4,0 (ora '+fmt(disp,1)+')'}
-  setReq('tcR1',x===0,x===0?'fatto':x===null?'non raggiungibile':'mancano '+x.toLocaleString('it-IT')+' recensioni');
+  setReq('tcR1',x===0,x===0?'':x===null?': non raggiungibile':': mancano '+x.toLocaleString('it-IT')+' recensioni');
 }
 function setReq(id,ok,txt){
   const i=$(id).querySelector('i');i.className=ok?'ok':'no';i.textContent=ok?'✓':'✗';
@@ -262,7 +263,7 @@ function setReq(id,ok,txt){
 function premioTop10(pos,tot){
   if(!pos||!tot)return;
   const p=pos/tot*100,ok=p<=10;
-  setReq('tcR2',ok,(ok?'sì, fatto':'non ancora')+' ('+pos+'° su '+tot.toLocaleString('it-IT')+' a Catania, il '+fmt(p,1)+'% migliore)');
+  setReq('tcR2',ok,pos+'° su '+tot.toLocaleString('it-IT')+' a Catania ('+fmt(p,1)+'%)');
 }
 // Premio Best of the Best: posizioni mancanti = posizione attuale − 14
 function premioBB(pos){
