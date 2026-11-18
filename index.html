@@ -85,6 +85,18 @@ td small{display:block;color:var(--mute);font-size:12px}
 .pos b{display:block;font-size:30px;font-weight:800;line-height:1.1;letter-spacing:-.02em;color:var(--g);font-variant-numeric:tabular-nums}
 .pos span{display:block;font-size:14px;margin-top:2px}
 .pos small{display:block;color:var(--mute);font-size:12.5px;margin-top:6px}
+
+.premi{display:grid;gap:12px}
+.premio{display:flex;gap:16px;align-items:flex-start;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px}
+.premio svg{flex:none;width:68px;height:68px}
+.premio h3{margin:0 0 2px;font-size:17px;font-weight:700}
+.premio .per{font-size:13px;color:var(--mute);margin:0 0 10px}
+.premio .n{display:block;font-size:34px;font-weight:800;line-height:1.05;letter-spacing:-.02em;color:var(--g);font-variant-numeric:tabular-nums}
+.premio .gold{color:#b8860b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .premio .gold{color:#e8b93c}}
+:root[data-theme="dark"] .premio .gold{color:#e8b93c}
+.premio span.l{display:block;font-size:14px;margin-top:2px}
+.premio small{display:block;color:var(--mute);font-size:12.5px;margin-top:6px}
 </style>
 </head>
 <body>
@@ -115,6 +127,51 @@ td small{display:block;color:var(--mute);font-size:12px}
 </div>
 <div class="upd"><span class="pulse" id="pulse"></span><p class="note" id="upmsg" aria-live="polite" style="margin:0">Aggiornamento automatico da Tripadvisor…</p></div>
 <a class="btn" id="tl" href="https://www.tripadvisor.it/Restaurant_Review-g187888-d1739002-Reviews-Cutilisci-Catania_Province_of_Catania_Sicily.html" target="_blank" rel="noopener">Apri Tripadvisor</a>
+</section>
+
+<section class="card" id="premi">
+<h2>I premi Tripadvisor</h2>
+<div class="premi">
+
+<div class="premio">
+<svg viewBox="0 0 68 68" aria-hidden="true">
+<path d="M22 40 L14 64 L22 59 L27 66 L33 44 Z" fill="#0a6e48"/>
+<path d="M46 40 L54 64 L46 59 L41 66 L35 44 Z" fill="#0a6e48"/>
+<g fill="#0c8f5e"><circle cx="34" cy="28" r="24"/></g>
+<g fill="#13a86f"><circle cx="34" cy="6" r="5"/><circle cx="49.6" cy="12.4" r="5"/><circle cx="56" cy="28" r="5"/><circle cx="49.6" cy="43.6" r="5"/><circle cx="34" cy="50" r="5"/><circle cx="18.4" cy="43.6" r="5"/><circle cx="12" cy="28" r="5"/><circle cx="18.4" cy="12.4" r="5"/></g>
+<circle cx="34" cy="28" r="19" fill="#0c8f5e" stroke="#fff" stroke-width="2"/>
+<path d="M34 16.5 l3.4 7 7.7 1.1 -5.6 5.4 1.3 7.6 -6.8-3.6 -6.8 3.6 1.3-7.6 -5.6-5.4 7.7-1.1z" fill="#fff"/>
+</svg>
+<div>
+<h3>Premio Travellers' Choice</h3>
+<p class="per" id="tcPer">Periodo di assegnazione: recensioni dal 1° gennaio al 31 dicembre</p>
+<b class="n" id="tcN">–</b>
+<span class="l" id="tcL">recensioni da 5 stelle mancanti per avere 4,0</span>
+<small id="tcS">Serve un punteggio di almeno 4,0 e stare nel 10% migliore dei locali.</small>
+</div>
+</div>
+
+<div class="premio">
+<svg viewBox="0 0 68 68" aria-hidden="true">
+<path d="M18 8 H50 V24 C50 36 43 43 34 43 C25 43 18 36 18 24 Z" fill="#d4a017"/>
+<path d="M18 12 H9 C9 24 14 30 21 31" fill="none" stroke="#d4a017" stroke-width="4" stroke-linecap="round"/>
+<path d="M50 12 H59 C59 24 54 30 47 31" fill="none" stroke="#d4a017" stroke-width="4" stroke-linecap="round"/>
+<path d="M22 10 H27 V26 C27 32 30 36 33 38 C26 37 22 32 22 25 Z" fill="#f2cd5c" opacity=".8"/>
+<rect x="30" y="42" width="8" height="10" fill="#b8860b"/>
+<rect x="20" y="52" width="28" height="8" rx="2" fill="#8a6408"/>
+<rect x="15" y="59" width="38" height="6" rx="2" fill="#6e5006"/>
+<path d="M34 15 l2.6 5.3 5.9.9 -4.3 4.1 1 5.8 -5.2-2.7 -5.2 2.7 1-5.8 -4.3-4.1 5.9-.9z" fill="#fff8e1"/>
+</svg>
+<div>
+<h3>Premio Best of the Best</h3>
+<p class="per">Per essere eleggibili bisogna entrare tra i primi 14 della classifica generale di Catania.</p>
+<b class="n gold" id="bbN">–</b>
+<span class="l" id="bbL">posizioni mancanti per essere eleggibili</span>
+<small id="bbS">Calcolo: posizione attuale − 14.</small>
+</div>
+</div>
+
+</div>
 </section>
 
 
@@ -165,6 +222,24 @@ function calc(){
     head+='<div class="note" style="margin-top:6px">Con '+x.toLocaleString('it-IT')+' nuove recensioni da '+fmt(m,1)+' la media sale a '+fmt(after,4)+'.</div>';
   }
   out.innerHTML=head+'<div class="bub" aria-hidden="true">'+bub+'</div><div class="stats"><div><b>'+fmt(avg,4)+'</b><small>media esatta</small></div><div><b>'+fmt(disp,1)+'</b><small>punteggio mostrato</small></div><div><b>'+N.toLocaleString('it-IT')+'</b><small>recensioni</small></div></div>';
+  premioTC(S,N);
+}
+// Premio Travellers' Choice: quante recensioni da 5 stelle servono per vedere 4,0 (media ≥ 3,95)
+function premioTC(S,N){
+  const y=+new Date().toLocaleString('en-US',{year:'numeric',timeZone:'Europe/Rome'});
+  const fine=new Date(y,11,31,23,59,59),oggi=new Date();
+  const gg=Math.max(0,Math.ceil((fine-oggi)/864e5));
+  $('tcPer').textContent='Periodo di assegnazione: recensioni dal 1° gennaio al 31 dicembre '+y+' · premio assegnato nel '+(y+1)+' · mancano '+gg+' giorni alla fine del periodo';
+  if(!N)return;
+  const x=need(S,N,3.95,5),disp=Math.round(S/N*10+1e-9)/10;
+  if(x===0){$('tcN').textContent='0';$('tcL').textContent='Hai già 4,0: requisito del punteggio raggiunto'}
+  else{$('tcN').textContent=x.toLocaleString('it-IT');$('tcL').textContent='recensioni da 5 stelle mancanti per avere 4,0 (ora '+fmt(disp,1)+')'}
+}
+// Premio Best of the Best: posizioni mancanti = posizione attuale − 14
+function premioBB(pos){
+  const m=pos-14;
+  if(m>0){$('bbN').textContent=m.toLocaleString('it-IT');$('bbL').textContent='posizioni mancanti per essere eleggibili (ora '+pos+'°)'}
+  else{$('bbN').textContent='0';$('bbL').textContent='Sei tra i primi 14 ('+pos+'°): sei eleggibile'}
 }
 ['c1','c2','c3','c4','c5'].forEach(id=>$(id).addEventListener('input',calc));
 const DEF=[772,597,253,129,130];
@@ -229,7 +304,7 @@ calc();
     const r=await fetch('posizioni.json?'+Date.now(),{cache:'no-store'});
     if(!r.ok)return;
     const d=await r.json(),it=n=>n.toLocaleString('it-IT');
-    if(d.generale){$('pg').textContent=d.generale.pos+'°';$('pgs').textContent='su '+it(d.generale.totale)+' ristoranti a Catania'}
+    if(d.generale){$('pg').textContent=d.generale.pos+'°';$('pgs').textContent='su '+it(d.generale.totale)+' ristoranti a Catania';premioBB(d.generale.pos)}
     if(d.pizzerie){$('pp').textContent=d.pizzerie.pos+'°';$('pps').textContent='su '+it(d.pizzerie.totale)+' pizzerie a Catania'}
     if(d.ts){const t=new Date(d.ts);if(!isNaN(t))$('posNote').textContent='Aggiornato il '+t.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Rome'})+'. Si aggiorna ogni giorno.'}
   }catch(e){}
