@@ -9,6 +9,26 @@
   ],
   "total": 1896,
   "rankings": [],
-  "date": "2026-11-17",
-  "updatedAt": "2026-11-17T15:05:51+01:00"
+  "rank_raw": {
+    "campi_principali": [
+      "addresses",
+      "coordinates",
+      "descriptions",
+      "geo",
+      "geo_id",
+      "id",
+      "names",
+      "official_email",
+      "opening_hours",
+      "phone_numbers",
+      "photos",
+      "price_level",
+      "status",
+      "traveler_ratings",
+      "urls"
+    ],
+    "trovati": []
+  },
+  "date": "2026-11-18",
+  "updatedAt": "2026-11-18T02:39:50+01:00"
 }
