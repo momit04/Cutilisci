@@ -138,22 +138,8 @@ h2{font-size:14px;margin-bottom:8px}
 .req small{font-size:11px}
 .premio .per{font-size:11px;margin-top:10px;padding-top:8px}
 }
-.cls summary{list-style:none;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;position:relative;padding-right:28px}
-.cls summary::-webkit-details-marker{display:none}
-.cls .st{font-weight:600;font-size:16px;flex:1 1 auto}
-.cls .sv{font-size:14px;color:var(--mute)}.cls .sv b{color:var(--g);font-size:16px}
-.cls .chev{position:absolute;right:4px;top:6px;width:10px;height:10px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg);transition:transform .2s}
-.cls[open] .chev{transform:rotate(-135deg);top:11px}
-.cls[open] summary{margin-bottom:12px}
-@media(min-width:900px){.layout{grid-template-columns:1fr 1fr 1fr;align-items:start}.cls .sv{flex-basis:100%}}
-@media(max-width:600px){.layout>.cls{grid-column:1/-1}}
 @media(max-width:600px){
-.layout{grid-template-columns:1fr 86px;gap:8px}
-.layout>.premio.tc{grid-column:1;grid-row:1}
-.layout>.premio.bb{grid-column:1;grid-row:2}
-.layout>.cls:not([open]){grid-column:2;grid-row:1;align-self:start}
-.layout>.cls[open]{grid-column:1/-1;grid-row:3}
-.layout:has(.cls[open]){grid-template-columns:1fr}
+.layout{grid-template-columns:1fr;gap:10px}
 .card.premio{padding:14px 12px}
 .premio .hd{flex-direction:row;align-items:center;gap:10px;margin-bottom:10px}
 .premio .hd svg{width:40px;height:40px}
@@ -162,14 +148,8 @@ h2{font-size:14px;margin-bottom:8px}
 .premio .n{font-size:34px}
 .premio span.l{font-size:13px}
 .req li{font-size:12.5px}
-.cls{padding:10px 8px}
-.cls:not([open]) summary{flex-direction:column;align-items:flex-start;gap:6px;padding-right:0}
-.cls:not([open]) .st{font-size:12.5px;line-height:1.2;flex:none}
-.cls:not([open]) .sv{display:flex;flex-direction:column;gap:4px;font-size:11px;line-height:1.2}
-.cls:not([open]) .sv b{display:block;font-size:19px}
-.cls:not([open]) .dot,.cls:not([open]) .full{display:none}
-.cls:not([open]) .chev{position:static;margin:0 0 2px 4px}
 }
+.layout>.cls{grid-column:1/-1}
 </style>
 </head>
 <body>
@@ -224,14 +204,14 @@ h2{font-size:14px;margin-bottom:8px}
 <p class="per" id="bbPer">Periodo di assegnazione: recensioni dal 1° luglio al 30 giugno</p>
 </section>
 
-<details class="card cls">
-<summary><span class="st">Classifica<span class="full"> su Tripadvisor</span></span><span class="sv"><span><b id="sumG">–</b> generale</span><span class="dot"> · </span><span><b id="sumP">–</b> pizzerie</span></span><i class="chev" aria-hidden="true"></i></summary>
+<section class="card cls">
+<h2>Classifica su Tripadvisor</h2>
 <div class="pos">
 <div><b id="pg">–</b><span id="pgs">in attesa del primo aggiornamento</span><small>Classifica ristoranti di Catania, ordine Pertinenza</small></div>
 <div><b id="pp">–</b><span id="pps">in attesa del primo aggiornamento</span><small>Elenco pizzerie di Catania, ordine Pertinenza</small></div>
 </div>
 <p class="note" id="posNote" style="margin-top:10px">Si aggiorna ogni giorno.</p>
-</details>
+</section>
 
 </div>
 
@@ -380,8 +360,8 @@ calc();
     const r=await fetch('posizioni.json?'+Date.now(),{cache:'no-store'});
     if(!r.ok)return;
     const d=await r.json(),it=n=>n.toLocaleString('it-IT');
-    if(d.generale){$('pg').textContent=d.generale.pos+'°';$('sumG').textContent=d.generale.pos+'°';$('pgs').textContent='su '+it(d.generale.totale)+' ristoranti a Catania';premioBB(d.generale.pos);premioTop10(d.generale.pos,d.generale.totale)}
-    if(d.pizzerie){$('pp').textContent=d.pizzerie.pos+'°';$('sumP').textContent=d.pizzerie.pos+'°';$('pps').textContent='su '+it(d.pizzerie.totale)+' pizzerie a Catania'}
+    if(d.generale){$('pg').textContent=d.generale.pos+'°';$('pgs').textContent='su '+it(d.generale.totale)+' ristoranti a Catania';premioBB(d.generale.pos);premioTop10(d.generale.pos,d.generale.totale)}
+    if(d.pizzerie){$('pp').textContent=d.pizzerie.pos+'°';$('pps').textContent='su '+it(d.pizzerie.totale)+' pizzerie a Catania'}
     if(d.ts){const t=new Date(d.ts);if(!isNaN(t))$('posNote').textContent='Aggiornato il '+t.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Rome'})+'. Si aggiorna ogni giorno.'}
   }catch(e){}
 })();
