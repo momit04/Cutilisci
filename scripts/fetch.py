@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Legge i voti da Tripadvisor (API Terra) e salva data.json.
 Fa al massimo UNA chiamata al giorno: se data.json e' gia' di oggi (ora italiana), non fa nulla.
 Solo libreria standard di Python."""
@@ -41,8 +40,11 @@ def parse_rankings(d):
 
     def walk(v):
         if isinstance(v, dict):
-            if isinstance(v.get('rank'), int) or isinstance(v.get('ranking'), int):
-                found.append(v)
+            for k in ('rank', 'ranking', 'position', 'rank_position'):
+                x = v.get(k)
+                if isinstance(x, int) or (isinstance(x, str) and re.fullmatch(r'\d[\d.,]*', x.strip())):
+                    found.append(dict(v, rank=int(re.sub(r'\D', '', str(x)))))
+                    break
             for x in v.values():
                 walk(x)
         elif isinstance(v, list):
@@ -51,9 +53,12 @@ def parse_rankings(d):
     walk({k: v for k, v in d.items() if k not in ('reviews',)})
     out = []
     for r in found:
-        r = dict(r, rank=r.get('rank', r.get('ranking')),
-                 total=r.get('total', r.get('ranking_out_of', r.get('out_of'))))
-        out.append({k: r.get(k) for k in ('rank', 'total', 'category', 'category_id', 'geo', 'geo_id', 'display_text')
+        tot = r.get('total', r.get('ranking_out_of', r.get('out_of', r.get('total_count'))))
+        if isinstance(tot, str) and re.fullmatch(r'\d[\d.,]*', tot.strip()):
+            tot = int(re.sub(r'\D', '', tot))
+        r = dict(r, total=tot)
+        out.append({k: r.get(k) for k in ('rank', 'total', 'category', 'category_id', 'geo', 'geo_id', 'display_text',
+                                          'ranking_string', 'geo_location_name')
                     if r.get(k) is not None})
     return out
 
@@ -78,7 +83,61 @@ def fetch(key, loc):
     counts = [by.get(k, 0) for k in (5, 4, 3, 2, 1)]
     names = d.get('names') or []
     name = next((n['value'] for n in names if n.get('primary')), names[0]['value'] if names else None)
-    return {'name': name, 'counts': counts, 'total': sum(counts), 'rankings': parse_rankings(d)}
+    return {'name': name, 'counts': counts, 'total': sum(counts), 'rankings': parse_rankings(d),
+            'rank_raw': raw_rank_award(d)}
+
+
+def raw_rank_award(d):
+    """Copia grezza (ridotta) di tutto cio' che nella risposta riguarda classifica o premi:
+    serve a scoprire come l'API Terra chiama questi campi. Nessun dato inventato, solo cio' che arriva."""
+    hits = []
+
+    def walk(v, path):
+        if len(hits) >= 20:
+            return
+        if isinstance(v, dict):
+            for k, x in v.items():
+                p = f'{path}.{k}' if path else k
+                if re.search(r'rank|award|position|popular', k, re.I):
+                    s = json.dumps(x, ensure_ascii=False)
+                    hits.append({'campo': p, 'valore': json.loads(s) if len(s) <= 800 else s[:800] + '…'})
+                else:
+                    walk(x, p)
+        elif isinstance(v, list):
+            for i, x in enumerate(v[:30]):
+                walk(x, f'{path}[{i}]')
+    walk({k: v for k, v in d.items() if k not in ('reviews', 'photos', 'descriptions')}, '')
+    return {'campi_principali': sorted(d.keys()), 'trovati': hits}
+
+
+CONTENT_API = os.environ.get('TA_CONTENT_API_BASE', 'https://api.content.tripadvisor.com/api/v1')
+
+
+def fetch_content(key, loc):
+    """API Content ufficiale: /location/{id}/details restituisce ranking_data e awards."""
+    url = f"{CONTENT_API}/location/{loc}/details?key={key}&language=it&currency=EUR"
+    req = urllib.request.Request(url, headers={'accept': 'application/json'})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            d = json.loads(r.read().decode('utf-8', 'ignore'))
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"{e.code} {e.read().decode('utf-8', 'ignore')[:200]}")
+    out = {}
+    rd = d.get('ranking_data') or {}
+    if rd.get('ranking'):
+        out['ranking_api'] = {
+            'pos': int(str(rd.get('ranking')).replace('.', '').replace(',', '')),
+            'totale': int(str(rd.get('ranking_out_of') or 0).replace('.', '').replace(',', '')) or None,
+            'testo': rd.get('ranking_string'),
+            'geo': rd.get('geo_location_name'),
+        }
+    aw = d.get('awards') or []
+    out['awards'] = [{'tipo': a.get('award_type'), 'anno': a.get('year'), 'nome': a.get('display_name')} for a in aw]
+    for k in ('rating', 'num_reviews'):
+        if d.get(k) is not None:
+            out['content_' + k] = d.get(k)
+    print('API Content:', out.get('ranking_api'), '| premi:', len(out['awards']))
+    return out
 
 
 def main():
@@ -110,6 +169,14 @@ def main():
         print('ERRORE:', e)
         return 1  # data.json resta com'era: nessun dato sovrascritto
     data.update({'date': today, 'updatedAt': now.isoformat(timespec='seconds')})
+    # Classifica e premi dall'API Content ufficiale (facoltativa: serve il segreto TRIPADVISOR_CONTENT_KEY).
+    # Una sola chiamata al giorno, nessuna visita alla pagina del locale.
+    ckey = os.environ.get('TRIPADVISOR_CONTENT_KEY', '').strip()
+    if ckey:
+        try:
+            data.update(fetch_content(ckey, loc))
+        except Exception as e:
+            print('Classifica API Content non disponibile:', e)
     with open(OUT, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
         f.write('\n')
