@@ -273,7 +273,7 @@ function premioTC(S,N){
   const y0=mese>=7?y:y-1,y1=y0+1;
   const fine=new Date(y1,5,30,23,59,59);
   const gg=Math.max(0,Math.ceil((fine-oggi)/864e5));
-  $('bbPer').textContent='Periodo di assegnazione: recensioni dal 1° luglio '+y0+' al 30 giugno '+y1+' · premio annunciato a settembre '+y1+' · mancano '+gg+' giorni alla fine del periodo';
+  $('bbPer').textContent='Periodo di assegnazione: recensioni dal 1° luglio '+y0+' al 30 giugno '+y1+' · mancano '+gg+' giorni alla fine del periodo';
   if(!N)return;
   const x=need(S,N,3.95,5),disp=Math.round(S/N*10+1e-9)/10;
   if(x===0){$('tcN').textContent='0';$('tcL').textContent='Hai già 4,0: requisito del punteggio raggiunto'}
