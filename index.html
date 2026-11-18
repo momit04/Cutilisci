@@ -91,6 +91,10 @@ td small{display:block;color:var(--mute);font-size:12px}
 .premio svg{flex:none;width:68px;height:68px}
 .premio h3{margin:0 0 2px;font-size:17px;font-weight:700}
 .premio .per{font-size:13px;color:var(--mute);margin:0 0 10px}
+.premio .tag{display:inline-block;font-size:12.5px;font-weight:600;color:var(--g);background:var(--gsoft);border-radius:8px;padding:3px 10px;margin:2px 0 8px}
+.premio .tag.gold{color:#8a6408;background:#fbefc8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .premio .tag.gold{color:#e8b93c;background:#3a3014}}
+:root[data-theme="dark"] .premio .tag.gold{color:#e8b93c;background:#3a3014}
 .premio .n{display:block;font-size:34px;font-weight:800;line-height:1.05;letter-spacing:-.02em;color:var(--g);font-variant-numeric:tabular-nums}
 .premio .gold{color:#b8860b}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .premio .gold{color:#e8b93c}}
@@ -144,6 +148,7 @@ td small{display:block;color:var(--mute);font-size:12px}
 </svg>
 <div>
 <h3>Premio Travellers' Choice</h3>
+<p class="tag">I migliori 10 per cento dei ristoranti al mondo</p>
 <p class="per" id="tcPer">Periodo di assegnazione: recensioni dal 1° luglio al 30 giugno</p>
 <b class="n" id="tcN">–</b>
 <span class="l" id="tcL">recensioni da 5 stelle mancanti per avere 4,0</span>
@@ -164,6 +169,7 @@ td small{display:block;color:var(--mute);font-size:12px}
 </svg>
 <div>
 <h3>Premio Best of the Best</h3>
+<p class="tag gold">I migliori 1 per cento dei ristoranti al mondo</p>
 <p class="per">Per essere eleggibili bisogna entrare tra i primi 14 della classifica generale di Catania.</p>
 <b class="n gold" id="bbN">–</b>
 <span class="l" id="bbL">posizioni mancanti per essere eleggibili</span>
@@ -233,7 +239,7 @@ function premioTC(S,N){
   const y0=mese>=7?y:y-1,y1=y0+1;
   const fine=new Date(y1,5,30,23,59,59);
   const gg=Math.max(0,Math.ceil((fine-oggi)/864e5));
-  $('tcPer').textContent='Periodo di assegnazione: recensioni dal 1° luglio '+y0+' al 30 giugno '+y1+' · premio annunciato a settembre '+y1+' · mancano '+gg+' giorni alla fine del periodo';
+  $('tcPer').textContent='Periodo di assegnazione (stima): recensioni dal 1° luglio '+y0+' al 30 giugno '+y1+' · premio annunciato a settembre '+y1+' · mancano '+gg+' giorni alla fine del periodo';
   if(!N)return;
   const x=need(S,N,3.95,5),disp=Math.round(S/N*10+1e-9)/10;
   if(x===0){$('tcN').textContent='0';$('tcL').textContent='Hai già 4,0: requisito del punteggio raggiunto'}
