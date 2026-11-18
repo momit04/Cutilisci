@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Quante recensioni mancano ai Cutilisci?</title>
+<title>Cutilisci</title>
 <style>
 :root{--bg:#f3f6f4;--card:#fff;--ink:#12241f;--mute:#5c6f68;--line:#d6e0db;--g:#0c8f5e;--gsoft:#dff3ea;--warn:#b4531a;--r:14px;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -114,7 +114,7 @@ main{padding:18px 12px calc(96px + env(safe-area-inset-bottom,0px))}
 h1{font-size:24px;margin-bottom:12px}
 h2{font-size:14px;margin-bottom:8px}
 .layout{grid-template-columns:1fr 1fr;gap:10px}
-.layout>.result,.layout>.card:nth-child(2){grid-column:1/-1}
+
 .card{padding:14px}
 .result{padding:16px 12px}
 .big{font-size:56px}
@@ -138,26 +138,49 @@ h2{font-size:14px;margin-bottom:8px}
 .req small{font-size:11px}
 .premio .per{font-size:11px;margin-top:10px;padding-top:8px}
 }
+.cls summary{list-style:none;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;position:relative;padding-right:28px}
+.cls summary::-webkit-details-marker{display:none}
+.cls .st{font-weight:600;font-size:16px;flex:1 1 auto}
+.cls .sv{font-size:14px;color:var(--mute)}.cls .sv b{color:var(--g);font-size:16px}
+.cls .chev{position:absolute;right:4px;top:6px;width:10px;height:10px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg);transition:transform .2s}
+.cls[open] .chev{transform:rotate(-135deg);top:11px}
+.cls[open] summary{margin-bottom:12px}
+@media(min-width:900px){.layout{grid-template-columns:1fr 1fr 1fr;align-items:start}.cls .sv{flex-basis:100%}}
+@media(max-width:600px){.layout>.cls{grid-column:1/-1}}
+@media(max-width:600px){
+.layout{grid-template-columns:1fr 86px;gap:8px}
+.layout>.premio.tc{grid-column:1;grid-row:1}
+.layout>.premio.bb{grid-column:1;grid-row:2}
+.layout>.cls:not([open]){grid-column:2;grid-row:1;align-self:start}
+.layout>.cls[open]{grid-column:1/-1;grid-row:3}
+.layout:has(.cls[open]){grid-template-columns:1fr}
+.card.premio{padding:14px 12px}
+.premio .hd{flex-direction:row;align-items:center;gap:10px;margin-bottom:10px}
+.premio .hd svg{width:40px;height:40px}
+.premio h3{font-size:15px}
+.premio .tag{font-size:11px;padding:2px 7px}
+.premio .n{font-size:34px}
+.premio span.l{font-size:13px}
+.req li{font-size:12.5px}
+.cls{padding:10px 8px}
+.cls:not([open]) summary{flex-direction:column;align-items:flex-start;gap:6px;padding-right:0}
+.cls:not([open]) .st{font-size:12.5px;line-height:1.2;flex:none}
+.cls:not([open]) .sv{display:flex;flex-direction:column;gap:4px;font-size:11px;line-height:1.2}
+.cls:not([open]) .sv b{display:block;font-size:19px}
+.cls:not([open]) .dot,.cls:not([open]) .full{display:none}
+.cls:not([open]) .chev{position:static;margin:0 0 2px 4px}
+}
 </style>
 </head>
 <body>
 <main>
-<h1>Quante recensioni mancano ai Cutilisci?</h1>
+<h1>Cutilisci</h1>
 
 <div class="layout">
 
-<section class="card result" aria-live="polite">
-<div id="out"></div>
-</section>
 
-<section class="card">
-<h2>La tua posizione su Tripadvisor</h2>
-<div class="pos">
-<div><b id="pg">–</b><span id="pgs">in attesa del primo aggiornamento</span><small>Classifica ristoranti di Catania, ordine Pertinenza</small></div>
-<div><b id="pp">–</b><span id="pps">in attesa del primo aggiornamento</span><small>Elenco pizzerie di Catania, ordine Pertinenza</small></div>
-</div>
-<p class="note" id="posNote" style="margin-top:10px">Si aggiorna ogni giorno.</p>
-</section>
+
+
 
 <section class="card premio tc">
 <div class="hd">
@@ -201,16 +224,26 @@ h2{font-size:14px;margin-bottom:8px}
 <p class="per" id="bbPer">Periodo di assegnazione: recensioni dal 1° luglio al 30 giugno</p>
 </section>
 
+<details class="card cls">
+<summary><span class="st">Classifica<span class="full"> su Tripadvisor</span></span><span class="sv"><span><b id="sumG">–</b> generale</span><span class="dot"> · </span><span><b id="sumP">–</b> pizzerie</span></span><i class="chev" aria-hidden="true"></i></summary>
+<div class="pos">
+<div><b id="pg">–</b><span id="pgs">in attesa del primo aggiornamento</span><small>Classifica ristoranti di Catania, ordine Pertinenza</small></div>
+<div><b id="pp">–</b><span id="pps">in attesa del primo aggiornamento</span><small>Elenco pizzerie di Catania, ordine Pertinenza</small></div>
+</div>
+<p class="note" id="posNote" style="margin-top:10px">Si aggiorna ogni giorno.</p>
+</details>
+
 </div>
 
 <div hidden>
+<div id="out"></div>
 <input id="c5" value="772"><input id="c4" value="597"><input id="c3" value="253"><input id="c2" value="129"><input id="c1" value="130">
 </div>
 
 <div class="upd foot"><span class="pulse" id="pulse"></span><p class="note" id="upmsg" aria-live="polite" style="margin:0">Aggiornamento automatico da Tripadvisor…</p></div>
 <a class="btn" id="tl" href="https://www.tripadvisor.it/Restaurant_Review-g187888-d1739002-Reviews-Cutilisci-Catania_Province_of_Catania_Sicily.html" target="_blank" rel="noopener">Apri Tripadvisor</a>
 </main>
-<div id="bar" role="status" aria-live="polite"><div class="in"><div id="bn">–</div><div id="bt">recensioni mancanti<small id="bs"></small></div></div></div>
+<div id="bar" role="status" aria-live="polite"><div class="in"><div id="bn">–</div><div id="bt">recensioni da 5 stelle mancanti<small id="bs"></small></div></div></div>
 <div id="toast" role="alert"></div>
 <div id="ld" role="alertdialog" aria-modal="true" aria-live="assertive"><div class="box"><div class="sp"></div><p>Sto caricando i dati nuovi…</p></div></div>
 <script>
@@ -347,8 +380,8 @@ calc();
     const r=await fetch('posizioni.json?'+Date.now(),{cache:'no-store'});
     if(!r.ok)return;
     const d=await r.json(),it=n=>n.toLocaleString('it-IT');
-    if(d.generale){$('pg').textContent=d.generale.pos+'°';$('pgs').textContent='su '+it(d.generale.totale)+' ristoranti a Catania';premioBB(d.generale.pos);premioTop10(d.generale.pos,d.generale.totale)}
-    if(d.pizzerie){$('pp').textContent=d.pizzerie.pos+'°';$('pps').textContent='su '+it(d.pizzerie.totale)+' pizzerie a Catania'}
+    if(d.generale){$('pg').textContent=d.generale.pos+'°';$('sumG').textContent=d.generale.pos+'°';$('pgs').textContent='su '+it(d.generale.totale)+' ristoranti a Catania';premioBB(d.generale.pos);premioTop10(d.generale.pos,d.generale.totale)}
+    if(d.pizzerie){$('pp').textContent=d.pizzerie.pos+'°';$('sumP').textContent=d.pizzerie.pos+'°';$('pps').textContent='su '+it(d.pizzerie.totale)+' pizzerie a Catania'}
     if(d.ts){const t=new Date(d.ts);if(!isNaN(t))$('posNote').textContent='Aggiornato il '+t.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Rome'})+'. Si aggiorna ogni giorno.'}
   }catch(e){}
 })();
