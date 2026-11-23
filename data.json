@@ -1,13 +1,13 @@
 {
   "name": "Cutilisci",
   "counts": [
-    785,
-    598,
+    787,
+    599,
     253,
     129,
     131
   ],
-  "total": 1896,
+  "total": 1899,
   "rankings": [],
   "rank_raw": {
     "campi_principali": [
@@ -29,6 +29,6 @@
     ],
     "trovati": []
   },
-  "date": "2026-11-22",
-  "updatedAt": "2026-11-22T18:04:50+01:00"
+  "date": "2026-11-23",
+  "updatedAt": "2026-11-23T15:06:38+01:00"
 }
